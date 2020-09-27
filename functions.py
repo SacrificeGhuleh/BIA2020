@@ -18,6 +18,11 @@ class Function(metaclass=abc.ABCMeta):
         self.maximum = maximum
         self.resolution = resolution
 
+        self.plotX = np.outer(np.linspace(self.minimum, self.maximum, self.resolution), np.ones(self.resolution))
+        self.plotY = self.plotX.copy().T
+        self.plotZ = self.getFunctionValue((self.plotX, self.plotY))
+        self.name = 'Unnamed function'
+
     ##
     # @brief Abstract function, each function shall be implemented in this function
     @abc.abstractmethod
@@ -26,16 +31,32 @@ class Function(metaclass=abc.ABCMeta):
 
     ##
     # @brief Function for plotting each function.
-    def plot(self):
+    def plot(self, bestPoint=None, pointsCloud=None, surfaceAlpha=1.0):
         fig = plt.figure()
         ax = fig.gca(projection='3d')
+        polyc = ax.plot_surface(self.plotX, self.plotY, self.plotZ, cmap=plt.cm.jet, rstride=1, cstride=1, linewidth=1,
+                                label=self.name, alpha=surfaceAlpha)
+        plt.title(self.name)
+        if pointsCloud is not None:
+            points = [[], [], []]
+            for point in pointsCloud:
+                points[0].append(point[0])
+                points[1].append(point[1])
+                points[2].append(self.getFunctionValue(point))
+            ax.scatter(xs=points[0], ys=points[1], zs=points[2], c='g', marker='o', label='considered points')
 
-        x = np.outer(np.linspace(self.minimum, self.maximum, self.resolution), np.ones(self.resolution))
-        y = x.copy().T
-        z = self.getFunctionValue((x, y))
-
-        ax.plot_surface(x, y, z, cmap=plt.cm.jet, rstride=1, cstride=1, linewidth=1, label='Sphere function')
+        if bestPoint is not None:
+            funcVal = self.getFunctionValue(bestPoint)
+            ax.scatter(xs=bestPoint[0], ys=bestPoint[1], zs=funcVal, c='r', marker='o', label='best point')
+        # fix issue with legend
+        # https://github.com/matplotlib/matplotlib/issues/4067
+        polyc._facecolors2d = polyc._facecolors3d
+        polyc._edgecolors2d = polyc._edgecolors3d
+        plt.legend()
         plt.show()
+        # plt.show(block=False)
+        plt.pause(0.5)
+        # plt.close()
         return ax
 
 
@@ -46,6 +67,7 @@ class Function(metaclass=abc.ABCMeta):
 class SphereFunction(Function):
     def __init__(self, minimum, maximum, resolution):
         super().__init__(minimum, maximum, resolution)
+        self.name = "Sphere function"
 
     def getFunctionValue(self, x):
         result = 0.0
@@ -61,6 +83,7 @@ class SphereFunction(Function):
 class SchwefelFunction(Function):
     def __init__(self, minimum, maximum, resolution):
         super().__init__(minimum, maximum, resolution)
+        self.name = "Schwefel function"
 
     def getFunctionValue(self, x):
         result = 0.0
@@ -78,6 +101,7 @@ class SchwefelFunction(Function):
 class RosenbrockFunction(Function):
     def __init__(self, minimum, maximum, resolution):
         super().__init__(minimum, maximum, resolution)
+        self.name = "Rosenbrock function"
 
     def getFunctionValue(self, x):
         result = 0.0
@@ -93,6 +117,7 @@ class RosenbrockFunction(Function):
 class RastriginFunction(Function):
     def __init__(self, minimum, maximum, resolution):
         super().__init__(minimum, maximum, resolution)
+        self.name = "Rastrigin function"
 
     def getFunctionValue(self, x):
         result = 0.0
@@ -109,6 +134,7 @@ class RastriginFunction(Function):
 class GriewankFunction(Function):
     def __init__(self, minimum, maximum, resolution):
         super().__init__(minimum, maximum, resolution)
+        self.name = "Griewank function"
 
     def getFunctionValue(self, x):
         sm = 0.0
@@ -126,6 +152,7 @@ class GriewankFunction(Function):
 class LevyFunction(Function):
     def __init__(self, minimum, maximum, resolution):
         super().__init__(minimum, maximum, resolution)
+        self.name = "Levy function"
 
     def getFunctionValue(self, x):
         d = len(x)
@@ -147,11 +174,12 @@ class LevyFunction(Function):
 
 ##
 # @brief   Michalewicz function
-# @remarks Michalewicz function is defined as \f$f(x)= TODO  \f$
+# @remarks Michalewicz function is defined as \f$f(x)=-\sum_{i=1}^d \sin(x_i)\sin^{2m}\left(\frac{ix_i^2}{\pi}\right)\f$
 # \n(source <a href="https://www.sfu.ca/~ssurjano/michal.html">here</a>)
 class MichalewiczFunction(Function):
     def __init__(self, minimum, maximum, resolution):
         super().__init__(minimum, maximum, resolution)
+        self.name = "Michalewicz function"
 
     def getFunctionValue(self, x):
         result = 0
@@ -159,6 +187,52 @@ class MichalewiczFunction(Function):
         for i in range(0, len(x)):
             result += np.sin(x[i]) * np.sin(((i + 1) * x[i] ** 2) / np.pi) ** (2 * m)
         return -result
+
+
+##
+# @brief   Zakharov function
+# @remarks Zakharov function is defined as \f$f(x) =\sum_{i=1}^n x_i^{2}+(\sum_{i=1}^n 0.5ix_i)^2 + (\sum_{i=1}^n 0.5ix_i)^4 \f$
+# \n(source <a href="https://www.sfu.ca/~ssurjano/zakharov.html">here</a>)
+class ZakharovFunction(Function):
+    def __init__(self, minimum, maximum, resolution):
+        super().__init__(minimum, maximum, resolution)
+        self.name = "Zakharov function"
+
+    def getFunctionValue(self, x):
+        sum1 = 0
+        sum2 = 0
+        for i in range(0, len(x)):
+            xi = x[i]
+            sum1 += xi ** 2
+            sum2 += 0.5 * (i - 1) * xi
+        return sum1 + sum2 ** 2 + sum2 ** 4
+
+
+##
+# @brief   Ackley function
+# @remarks Ackley function is defined as \f$f(x) = TODO \f$
+# \n(source <a href="https://www.sfu.ca/~ssurjano/ackley.html">here</a>)
+class AckleyFunction(Function):
+    def __init__(self, minimum, maximum, resolution):
+        super().__init__(minimum, maximum, resolution)
+        self.name = "Ackley function"
+
+    def getFunctionValue(self, x):
+        a = 20
+        b = 0.2
+        c = 2 * np.pi
+        d = len(x)
+        sum1 = 0
+        sum2 = 0
+
+        for i in range(0, len(x)):
+            xi = x[i]
+            sum1 += xi ** 2
+            sum2 += np.cos(c * xi)
+
+        term1 = -a * np.exp(-b * np.sqrt(sum1 / d))
+        term2 = -np.exp(sum2 / d)
+        return term1 + term2 + a + np.exp(1)
 
 
 def test():
@@ -171,12 +245,12 @@ def test():
                  GriewankFunction(-5, 5, 30),
                  LevyFunction(-10, 10, 30),
                  MichalewiczFunction(0, np.pi, 30),
+                 ZakharovFunction(-5, 10, 30),
+                 AckleyFunction(-32.768, 32.768, 60),
                  ]
 
     for func in functions:
         func.plot()
-        plt.show()
-        time.sleep(0.5)
 
 
 if __name__ == '__main__':
