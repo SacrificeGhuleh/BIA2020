@@ -109,7 +109,7 @@ class BlindAlgorithm(Algorithm):
     def plotFitnessHistory(self):
         if not self.solved:
             raise Exception("Algorithm is not solved, unable to plot graph")
-
+        print("Ploting fitness history...")
         plt.show()
         plt.plot(self.fitnessHistory, label='fitness history')
         plt.scatter(self.cloudFitnessHistory[0], self.cloudFitnessHistory[1], c='g',
@@ -119,10 +119,11 @@ class BlindAlgorithm(Algorithm):
         plt.title('fitness history')
         plt.legend(bbox_to_anchor=(1, 0), loc='lower left', fontsize='small')
         plt.draw()
+        plt.show()
 
 
 if __name__ == '__main__':
     blindAlg = BlindAlgorithm(function=fn.AckleyFunction(-32.768, 32.768, 60), pointCloudSize=60)
-    blindAlg.solve(maxIterations=50)
+    blindAlg.solve(maxIterations=10)
     print(f'Best found value: {blindAlg.fitness} in point {blindAlg.bestPoint}')
     blindAlg.plotFitnessHistory()
