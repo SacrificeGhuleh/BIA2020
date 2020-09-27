@@ -69,6 +69,9 @@ class BlindAlgorithm(Algorithm):
 
         self.reset()
 
+        ax = None
+        plt.show()
+
         ##
         # Iterate through algorithm:
         for i in range(0, maxIterations):
@@ -91,7 +94,12 @@ class BlindAlgorithm(Algorithm):
                 self.cloudFitnessHistory[0].append(i)
                 self.cloudFitnessHistory[1].append(currentFitness)
             # Plot each iteration
-            self.function.plot(pointsCloud=pointCloud, bestPoint=self.bestPoint, surfaceAlpha=0.5)
+            ax = self.function.plot(pointsCloud=pointCloud, bestPoint=self.bestPoint, surfaceAlpha=0.5, axes=ax)
+
+            plt.legend()
+            plt.pause(1)
+            plt.draw()
+
             self.fitnessHistory.append(self.fitness)
         self.solved = True
 
@@ -102,6 +110,7 @@ class BlindAlgorithm(Algorithm):
         if not self.solved:
             raise Exception("Algorithm is not solved, unable to plot graph")
 
+        plt.show()
         plt.plot(self.fitnessHistory, label='fitness history')
         plt.scatter(self.cloudFitnessHistory[0], self.cloudFitnessHistory[1], c='g',
                     label='considered fitness\nin generation')
@@ -109,7 +118,7 @@ class BlindAlgorithm(Algorithm):
         plt.xlabel("iteration")
         plt.title('fitness history')
         plt.legend(bbox_to_anchor=(1, 0), loc='lower left', fontsize='small')
-        plt.show()
+        plt.draw()
 
 
 if __name__ == '__main__':

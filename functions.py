@@ -31,9 +31,15 @@ class Function(metaclass=abc.ABCMeta):
 
     ##
     # @brief Function for plotting each function.
-    def plot(self, bestPoint=None, pointsCloud=None, surfaceAlpha=1.0):
-        fig = plt.figure()
-        ax = fig.gca(projection='3d')
+    def plot(self, bestPoint=None, pointsCloud=None, surfaceAlpha=1.0, axes=None):
+        ax = None
+        if axes is None:
+            fig = plt.figure()
+            ax = fig.gca(projection='3d')
+        else:
+            ax = axes
+            ax.clear()
+
         polyc = ax.plot_surface(self.plotX, self.plotY, self.plotZ, cmap=plt.cm.jet, rstride=1, cstride=1, linewidth=1,
                                 label=self.name, alpha=surfaceAlpha)
         plt.title(self.name)
@@ -52,11 +58,8 @@ class Function(metaclass=abc.ABCMeta):
         # https://github.com/matplotlib/matplotlib/issues/4067
         polyc._facecolors2d = polyc._facecolors3d
         polyc._edgecolors2d = polyc._edgecolors3d
-        plt.legend()
-        plt.show()
-        # plt.show(block=False)
-        plt.pause(0.5)
-        # plt.close()
+        # plt.legend()
+        # plt.show()
         return ax
 
 
@@ -249,8 +252,13 @@ def test():
                  AckleyFunction(-32.768, 32.768, 60),
                  ]
 
+    ax = None
+    plt.show()
     for func in functions:
-        func.plot()
+        ax = func.plot(axes=ax)
+        plt.legend()
+        plt.pause(1)
+        plt.draw()
 
 
 if __name__ == '__main__':
