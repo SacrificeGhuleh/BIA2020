@@ -10,48 +10,18 @@ import random
 ##
 # @brief Abstract class for algorithms
 class Algorithm(metaclass=abc.ABCMeta):
-    def __init__(self, function, dimensions=3):
+    def __init__(self, function, pointCloudSize=10, dimensions=3):
         if dimensions <= 0:
             raise Exception("dimensions must be unsigned integer number, greater than 0")
         self.function = function
         self.dimensions = dimensions
-
-    ##
-    # @brief Abstract function, each algorithm shall be implemented in this function
-    @abc.abstractmethod
-    def solve(self, maxIterations=-1):
-        pass
-
-    ##
-    # @brief Generates uniform random point for current function
-    def getRandomPointUniform(self):
-        randPoint = []
-        for i in range(0, self.dimensions - 1):
-            randPoint.append(random.uniform(self.function.minimum, self.function.maximum))
-        return randPoint
-
-    ##
-    # @brief Generates uniformly distributed points
-    # @param cloudSize number of generated points in cloud
-    def getRandomPointCloudUniform(self, cloudSize):
-        points = []
-        for i in range(0, cloudSize):
-            points.append(self.getRandomPointUniform())
-        return points
-
-
-##
-# @brief Blind search algorithm implementation
-class BlindAlgorithm(Algorithm):
-    def __init__(self, function, pointCloudSize=10, dimensions=3):
-        super().__init__(function, dimensions)
         self.solved = False
         self.fitness = sys.float_info.max
         self.bestPoint = None
-        self.pointCloudSize = pointCloudSize
+        self.pointCloud = None
         self.fitnessHistory = []
-        self.cloudFitnessHistory = []
         self.cloudFitnessHistory = [[], []]
+        self.pointCloudSize = pointCloudSize
 
     def reset(self):
         self.solved = False
@@ -61,12 +31,8 @@ class BlindAlgorithm(Algorithm):
         self.cloudFitnessHistory = [[], []]
 
     ##
-    # @brief Implementation of blind search algorithm
-    # @param maxIterations maximum number of iterations
-    def solve(self, maxIterations=-1):
-        if maxIterations <= 0:
-            raise Exception("in THIS case maxIterations must be unsigned integer number, greater than 0")
-
+    # @brief Abstract function, each algorithm shall be implemented in this function
+    def solve(self, maxIterations=-1, ax=None):
         self.reset()
 
         ax = None
@@ -75,26 +41,10 @@ class BlindAlgorithm(Algorithm):
         ##
         # Iterate through algorithm:
         for i in range(0, maxIterations):
-            ##
-            # 1. Generate points in range <function.minimum, function.maximum>
-            pointCloud = self.getRandomPointCloudUniform(cloudSize=self.pointCloudSize)
+            self.solveImpl(currentIterationNumber=i, ax=ax)
 
-            ##
-            # 2. Iterate through points cloud
-            for randPoint in pointCloud:
-                ##
-                # 3. Calculate fitness of each point.
-                # If new fitness is better than currently best fitness, overwrite best fitness and save best found point.
-                currentFitness = self.function.getFunctionValue(randPoint)
-                if currentFitness < self.fitness:
-                    self.fitness = currentFitness
-                    self.bestPoint = randPoint
-
-                # Save data for ploting later
-                self.cloudFitnessHistory[0].append(i)
-                self.cloudFitnessHistory[1].append(currentFitness)
             # Plot each iteration
-            ax = self.function.plot(pointsCloud=pointCloud, bestPoint=self.bestPoint, surfaceAlpha=0.5, axes=ax)
+            ax = self.function.plot(pointsCloud=self.pointCloud, bestPoint=self.bestPoint, surfaceAlpha=0.5, axes=ax)
 
             plt.legend()
             plt.pause(1)
@@ -102,6 +52,12 @@ class BlindAlgorithm(Algorithm):
 
             self.fitnessHistory.append(self.fitness)
         self.solved = True
+
+    ##
+    # @brief Abstract function, each algorithm shall be implemented in this function
+    @abc.abstractmethod
+    def solveImpl(self, currentIterationNumber, ax=None):
+        pass
 
     ##
     # @brief Plot history of fitness
@@ -121,9 +77,81 @@ class BlindAlgorithm(Algorithm):
         plt.draw()
         plt.show()
 
+    ##
+    # @brief Generates uniform random point for current function
+    def getRandomPointUniform(self, minimum=None, maximum=None):
+        if minimum is None:
+            minimum = self.function.minimum
+        if maximum is None:
+            maximum = self.function.maximum
+
+        randPoint = []
+        for i in range(0, self.dimensions - 1):
+            randPoint.append(np.random.uniform(minimum, maximum))
+        return randPoint
+
+    ##
+    # @brief Generates uniformly distributed points
+    # @param cloudSize number of generated points in cloud
+    def getRandomPointCloudUniform(self, minimum=None, maximum=None):
+        if minimum is None:
+            minimum = self.function.minimum
+        if maximum is None:
+            maximum = self.function.maximum
+
+        points = []
+        for i in range(0, self.pointCloudSize):
+            points.append(self.getRandomPointUniform(minimum, maximum))
+        return points
+
+    def getRandomPointNormal(self, point, sigma):
+        randPoint = []
+        for i in range(0, self.dimensions - 1):
+            randPoint.append(np.random.normal(point[i], sigma))
+        return randPoint
+
+    def getRandomPointCloudNormal(self, point, sigma, cloudSize):
+        points = []
+        for i in range(0, cloudSize):
+            points.append(self.getRandomPointNormal(point, sigma))
+        return points
+
+##
+# @brief Blind search algorithm implementation
+class BlindAlgorithm(Algorithm):
+    def __init__(self, function, pointCloudSize=10, dimensions=3):
+        super().__init__(function, pointCloudSize, dimensions)
+
+    def solveImpl(self, currentIterationNumber , ax=None):
+        ##
+        # 1. Generate uniformly distributed random point across domain
+        self.pointCloud = self.getRandomPointCloudUniform()
+        ##
+        # 2. Iterate through points cloud
+        for randPoint in self.pointCloud:
+            ##
+            # 3. Calculate fitness of each point.
+            # If new fitness is better than currently best fitness, overwrite best fitness and save best found point.
+            currentFitness = self.function.getFunctionValue(randPoint)
+            if currentFitness < self.fitness:
+                self.fitness = currentFitness
+                self.bestPoint = randPoint
+
+            # Save data for ploting later
+            self.cloudFitnessHistory[0].append(currentIterationNumber)
+            self.cloudFitnessHistory[1].append(currentFitness)
+
+
+class HillClimbAlgorithm(Algorithm):
+    def __init__(self, function, pointCloudSize=10, dimensions=3, sigma=5):
+        super().__init__(function, pointCloudSize, dimensions)
+        self.pointCloudSize = pointCloudSize
+        self.sigma = sigma
 
 if __name__ == '__main__':
-    blindAlg = BlindAlgorithm(function=fn.AckleyFunction(-32.768, 32.768, 60), pointCloudSize=60)
-    blindAlg.solve(maxIterations=10)
-    print(f'Best found value: {blindAlg.fitness} in point {blindAlg.bestPoint}')
-    blindAlg.plotFitnessHistory()
+    alg = BlindAlgorithm(function=fn.AckleyFunctionInstance, pointCloudSize=60)
+    # alg = HillClimbAlgorithm(function=fn.AckleyFunction(-32.768, 32.768, 60), pointCloudSize=60)
+    # alg = HillClimbAlgorithm(function=fn.sphereFunctionInstance, pointCloudSize=60)
+    alg.solve(maxIterations=10)
+    print(f'Best found value: {alg.fitness} in point {alg.bestPoint}')
+    alg.plotFitnessHistory()
