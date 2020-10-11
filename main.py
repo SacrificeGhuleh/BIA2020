@@ -28,6 +28,9 @@ class Application(tk.Frame):
         self.defaultNotebookFrameWidth = 200
         self.defaultNotebookFrameHeight = 200
 
+        self.renderDelay = tk.DoubleVar()
+        self.renderDelay.set(0.5)
+
     def createWorkspace(self):
         # Frames
         mainConfigFrame = ttk.LabelFrame(root, text="Config")
@@ -42,6 +45,10 @@ class Application(tk.Frame):
         controlsConfigFrame = ttk.LabelFrame(mainConfigFrame, text="Control")
         controlsConfigFrame.grid(row=2, column=0, padx=self.defPad, pady=self.defPad, sticky=tk.NW + tk.NE)
 
+        #
+        # Common config
+        #
+
         functionLabel = ttk.Label(commonConfigFrame, text="Function")
         functionLabel.grid(row=0, column=0, padx=self.defPad, pady=self.defPad, sticky=tk.E)
 
@@ -53,6 +60,15 @@ class Application(tk.Frame):
 
         iterationEntry = ttk.Entry(commonConfigFrame, textvariable=self.maxIterations)
         iterationEntry.grid(row=1, column=1, padx=self.defPad, pady=self.defPad, sticky=tk.W)
+
+        renderDelayLabel = ttk.Label(commonConfigFrame, text="Render delay")
+        renderDelayLabel.grid(row=2, column=0, padx=self.defPad, pady=self.defPad, sticky=tk.E)
+
+        renderDelaySlider = ttk.Scale(commonConfigFrame, from_=0.0, to=5.0, variable=self.renderDelay)
+        renderDelaySlider.grid(row=2, column=1, padx=self.defPad, pady=self.defPad, sticky=tk.W + tk.E)
+
+        renderDelayEntry = ttk.Entry(commonConfigFrame, textvariable=self.renderDelay)
+        renderDelayEntry.grid(row=3, column=1, padx=self.defPad, pady=self.defPad, sticky=tk.W + tk.E)
 
         # style = ttk.Style(root)
         # style.configure('lefttab.TNotebook', tabposition='wn')
@@ -87,8 +103,8 @@ class Application(tk.Frame):
         pointCloudSizeLabel = ttk.Label(frame, text="Point cloud size")
         pointCloudSizeLabel.grid(row=0, column=0, padx=self.defPad, pady=self.defPad, sticky=tk.E)
 
-        pointCloudSizeSpin = ttk.Entry(frame, textvariable=self.blindOptions["pointCloud"])
-        pointCloudSizeSpin.grid(row=0, column=1, padx=self.defPad, pady=self.defPad, sticky=tk.W)
+        pointCloudSizeEntry = ttk.Entry(frame, textvariable=self.blindOptions["pointCloud"])
+        pointCloudSizeEntry.grid(row=0, column=1, padx=self.defPad, pady=self.defPad, sticky=tk.W)
 
         return frame
 
@@ -150,10 +166,12 @@ class Application(tk.Frame):
 
     def run(self):
         algo = self.getAlgorithm()
+        algo.renderDelay = self.renderDelay.get()
         algo.solve(maxIterations=self.maxIterations.get())
         tk.messagebox.showinfo("Done", f"Best found value: {algo.fitness} in point {algo.bestPoint}")
         print(f'Best found value: {algo.fitness} in point {algo.bestPoint}')
         algo.plotFitnessHistory()
+
 
 if __name__ == '__main__':
     root = tk.Tk()

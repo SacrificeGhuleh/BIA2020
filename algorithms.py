@@ -28,6 +28,7 @@ class Algorithm(metaclass=abc.ABCMeta):
         self.pointCloud = None
         self.fitnessHistory = []
         self.cloudFitnessHistory = [[], []]
+        self.renderDelay = 0.5
 
     def reset(self):
         self.solved = False
@@ -57,7 +58,7 @@ class Algorithm(metaclass=abc.ABCMeta):
             ax = self.function.plot(pointsCloud=self.pointCloud, bestPoint=self.bestPoint, surfaceAlpha=0.5, axes=ax)
 
             plt.legend()
-            plt.pause(1)
+            plt.pause(self.renderDelay)
             plt.draw()
 
             self.fitnessHistory.append(self.fitness)
@@ -114,14 +115,16 @@ class Algorithm(metaclass=abc.ABCMeta):
         for i in range(0, self.pointCloudSize):
             points.append(self.getRandomPointUniform(minimum, maximum))
         return points
+
     ##
     # @brief Generates normally distributed point. Points are clamped to be always in domain of used function.
     def getRandomPointNormal(self, point, sigma):
         randPoint = []
         for i in range(0, self.dimensions - 1):
             randPoint.append(
-                self.clamp(np.random.normal(point[i], sigma), self.function.minimum, self.function.maximum))
+                    self.clamp(np.random.normal(point[i], sigma), self.function.minimum, self.function.maximum))
         return randPoint
+
     ##
     # @brief Generates normally distributed point cloud.
     def getRandomPointCloudNormal(self, point, sigma, cloudSize):
@@ -200,6 +203,7 @@ class HillClimbAlgorithm(Algorithm):
             self.cloudFitnessHistory[0].append(currentIterationNumber)
             self.cloudFitnessHistory[1].append(currentFitness)
 
+
 ##
 # @brief Blind search algorithm implementation
 class AnnealingAlgorithm(Algorithm):
@@ -224,7 +228,6 @@ class AnnealingAlgorithm(Algorithm):
             # Save data for ploting later
             self.cloudFitnessHistory[0].append(currentIterationNumber)
             self.cloudFitnessHistory[1].append(currentFitness)
-
 
 
 if __name__ == '__main__':
