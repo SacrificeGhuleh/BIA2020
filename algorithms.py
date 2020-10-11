@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 import abc
 
@@ -42,24 +44,22 @@ class Algorithm(metaclass=abc.ABCMeta):
     # @brief Main function for solving
     # @remarks This function implements most common code for all algorithms (e.g. drawing)
     # @param maxIterations maximum number of iterations
-    def solve(self, maxIterations=-1):
+    def solve(self, ax3d, canvas, maxIterations):
         self.reset()
 
-        ax = None
-        plt.show()
         print("Solving")
         ##
         # Iterate through algorithm:
         for i in range(0, maxIterations):
             print(f"  iteration: {i}")
-            self.solveImpl(currentIterationNumber=i, ax=ax)
+            self.solveImpl(currentIterationNumber=i, ax3d=ax3d)
 
             # Plot each iteration
-            ax = self.function.plot(pointsCloud=self.pointCloud, bestPoint=self.bestPoint, surfaceAlpha=0.5, axes=ax)
+            ax3d = self.function.plot(pointsCloud=self.pointCloud, bestPoint=self.bestPoint, surfaceAlpha=0.5, axes=ax3d)
 
-            plt.legend()
-            plt.pause(self.renderDelay)
-            plt.draw()
+            if canvas.figure.stale:
+                canvas.draw_idle()
+            canvas.start_event_loop(self.renderDelay)
 
             self.fitnessHistory.append(self.fitness)
         self.solved = True
@@ -69,7 +69,7 @@ class Algorithm(metaclass=abc.ABCMeta):
     # @brief Abstract function, each algorithm shall be implemented in this function
     # @remarks This function shall be the heart of each algorithm. This function is called each iteration.
     @abc.abstractmethod
-    def solveImpl(self, currentIterationNumber, ax=None):
+    def solveImpl(self, currentIterationNumber, ax3d=None):
         pass
 
     ##
@@ -79,10 +79,8 @@ class Algorithm(metaclass=abc.ABCMeta):
         if not self.solved:
             raise Exception("Algorithm is not solved, unable to plot graph")
         print("Ploting fitness history...")
-        plt.show()
         plt.plot(self.fitnessHistory, label='fitness history')
-        plt.scatter(self.cloudFitnessHistory[0], self.cloudFitnessHistory[1], c='g',
-                    label='considered fitness\nin generation')
+
         plt.ylabel("fitness")
         plt.xlabel("iteration")
         plt.title('fitness history')
@@ -148,7 +146,7 @@ class BlindAlgorithm(Algorithm):
     def __init__(self, function, pointCloudSize=10):
         super().__init__(function, pointCloudSize)
 
-    def solveImpl(self, currentIterationNumber, ax=None):
+    def solveImpl(self, currentIterationNumber, ax3d=None):
         ##
         # 1. Generate uniformly distributed random point across domain
         self.pointCloud = self.getRandomPointCloudUniform()
@@ -184,7 +182,7 @@ class HillClimbAlgorithm(Algorithm):
         super().reset()
         self.bestPoint = self.getRandomPointUniform()
 
-    def solveImpl(self, currentIterationNumber, ax=None):
+    def solveImpl(self, currentIterationNumber, ax3d=None):
         ##
         # 1. Generate normally distributed random point across domain
         self.pointCloud = self.getRandomPointCloudNormal(self.bestPoint, self.sigma, cloudSize=self.pointCloudSize)
@@ -215,73 +213,51 @@ class AnnealingAlgorithm(Algorithm):
         self.sigma = options["sigma"].get() * np.abs(function.maximum - function.minimum)
         self.elitism = options["elitism"].get()
         self.repeatsForTemperature = options["repeats"].get()
+        self.curTemp = self.temp
 
     def reset(self):
         super().reset()
-        self.bestPoint = self.getRandomPointUniform()
-
-    def solveImpl(self, currentIterationNumber, ax=None):
-        # ##
-        # # 1. Generate uniformly distributed random point across domain
-        # self.pointCloud = self.getRandomPointCloudUniform()
-        # ##
-        # # 2. Iterate through points cloud
-        # for randPoint in self.pointCloud:
-        #     ##
-        #     # 3. Calculate fitness of each point.
-        #     # If new fitness is better than currently best fitness, overwrite best fitness and save best found point.
-        #     currentFitness = self.function.getFunctionValue(randPoint)
-        #     if currentFitness < self.fitness:
-        #         self.fitness = currentFitness
-        #         self.bestPoint = randPoint
-        #
-        #     # Save data for ploting later
-        #     self.cloudFitnessHistory[0].append(currentIterationNumber)
-        #     self.cloudFitnessHistory[1].append(currentFitness)
-        pass
-
-    def solve(self, maxIterations=-1):
-        self.reset()
-
-        ax = None
-        plt.show()
-        print("Solving")
-        ##
-        # Iterate through algorithm:
-        temp = self.temp
-
+        self.curTemp = self.temp
         self.bestPoint = self.getRandomPointUniform()
         self.fitness = self.function.getFunctionValue(self.bestPoint)
-        i = 0
-        while temp > self.tempMin:
-            ######
+
+    def solveImpl(self, currentIterationNumber, ax3d=None):
+        ##
+        # 1. Generate normally distributed random point across domain
+        self.pointCloud = self.getRandomPointCloudNormal(self.bestPoint, self.sigma, cloudSize=self.pointCloudSize)
+        for repeat in range(self.repeatsForTemperature):
+            print(f"  iteration: {currentIterationNumber}, temperature: {self.curTemp} / minimal temperature: {self.tempMin}")
             ##
-            # 1. Generate normally distributed random point across domain
-            self.pointCloud = self.getRandomPointCloudNormal(self.bestPoint, self.sigma, cloudSize=self.pointCloudSize)
-            for repeat in range(self.repeatsForTemperature):
-                print(f"  iteration: {i}, temperature: {temp} / minimal temperature: {self.tempMin}")
-                # self.solveImpl(currentIterationNumber=i, ax=ax)
-                ##
-                # randomly select point from the set of neighbors
-                neighbor = random.choice(self.pointCloud)
-                neighborFitness = self.function.getFunctionValue(neighbor)
-                delta = neighborFitness - self.fitness
-                if delta < 0:
+            # randomly select point from the set of neighbors
+            neighbor = random.choice(self.pointCloud)
+            neighborFitness = self.function.getFunctionValue(neighbor)
+            delta = neighborFitness - self.fitness
+            if delta < 0:
+                self.bestPoint = neighbor
+                self.fitness = neighborFitness
+            else:
+                r = np.random.uniform(0, 1)
+                if r < np.exp(-delta / self.curTemp):
                     self.bestPoint = neighbor
                     self.fitness = neighborFitness
-                else:
-                    r = np.random.uniform(0, 1)
-                    if r < np.exp(-delta / temp):
-                        self.bestPoint = neighbor
-                        self.fitness = neighborFitness
-            temp = self.alpha * temp
-            ######
-            # Plot each iteration
-            ax = self.function.plot(pointsCloud=self.pointCloud, bestPoint=self.bestPoint, surfaceAlpha=0.5, axes=ax)
+        self.curTemp = self.alpha * self.curTemp
 
-            plt.legend()
-            plt.pause(self.renderDelay)
-            plt.draw()
+    def solve(self,  ax3d, canvas, maxIterations):
+        self.reset()
+
+        print("Solving")
+        i = 0
+        ##
+        # Iterate through algorithm:
+        while self.curTemp > self.tempMin:
+            self.solveImpl(currentIterationNumber=i, ax3d=ax3d)
+
+            # Plot each iteration
+            ax3d = self.function.plot(pointsCloud=self.pointCloud, bestPoint=self.bestPoint, surfaceAlpha=0.5, axes=ax3d)
+
+            if canvas.figure.stale:
+                canvas.draw_idle()
+            canvas.start_event_loop(self.renderDelay)
 
             self.fitnessHistory.append(self.fitness)
             i += 1
@@ -298,36 +274,3 @@ class VarStub:
 
     def set(self, val):
         self.value = val
-
-
-def getTestAnnealing():
-    annealingOptions = {
-            "pointCloud": VarStub(),
-            "temp"      : VarStub(),
-            "tempMin"   : VarStub(),
-            "alpha"     : VarStub(),
-            "sigma"     : VarStub(),
-            "elitism"   : VarStub(),
-            "repeats"   : VarStub()
-    }
-    annealingOptions["pointCloud"].set(10)
-    annealingOptions["temp"].set(5000)
-    annealingOptions["tempMin"].set(0.1)
-    annealingOptions["alpha"].set(0.99)
-    annealingOptions["sigma"].set(0.1)
-    annealingOptions["elitism"].set(True)
-    annealingOptions["repeats"].set(10)
-
-    alg = AnnealingAlgorithm(function=fn.AckleyFunctionInstance, options=annealingOptions)
-    return alg
-
-
-if __name__ == '__main__':
-    # alg = HillClimbAlgorithm(function=fn.AckleyFunction(-32.768, 32.768, 60), pointCloudSize=60)
-    # alg = HillClimbAlgorithm(function=fn.SphereFunctionInstance, pointCloudSize=60, sigma=0.05)
-    # alg = HillClimbAlgorithm(function=fn.AckleyFunctionInstance, pointCloudSize=60, sigma=0.05)
-    alg = getTestAnnealing()
-
-    alg.solve(maxIterations=30)
-    print(f'Best found value: {alg.fitness} in point {alg.bestPoint}')
-    alg.plotFitnessHistory()

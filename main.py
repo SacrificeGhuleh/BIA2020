@@ -1,13 +1,19 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
+import traceback
+
 import functions as fn
 import algorithms as alg
+import numpy as np
+from matplotlib.backends.backend_tkagg import ( FigureCanvasTkAgg, NavigationToolbar2Tk)
+from matplotlib.figure import Figure
 
 
 class Application(tk.Frame):
     def __init__(self, master=None):
         super().__init__(master)
+        self.initialized = False
         self.master = master
         self.initVars()
         self.createWorkspace()
@@ -58,6 +64,8 @@ class Application(tk.Frame):
         functionOption = ttk.OptionMenu(commonConfigFrame, self.selectedFunction, *self.functions)
         functionOption.grid(row=0, column=1, padx=self.defPad, pady=self.defPad, sticky=tk.W)
 
+        functionOption.bind("<Configure>", self.onSelectFunction)
+
         iterationLabel = ttk.Label(commonConfigFrame, text="Iterations")
         iterationLabel.grid(row=1, column=0, padx=self.defPad, pady=self.defPad, sticky=tk.E)
 
@@ -91,6 +99,39 @@ class Application(tk.Frame):
 
         runButton = ttk.Button(controlsConfigFrame, text="Run", command=self.run)
         runButton.grid(row=0, column=1, padx=self.defPad, pady=self.defPad, sticky=tk.E)
+
+        graph3dFrame = ttk.LabelFrame(mainFrame, text="3D plot")
+        graph3dFrame.grid(row=0, column=1, padx=self.defPad, pady=self.defPad, sticky=tk.NW + tk.NE)
+
+        self.fig3D = Figure(figsize=(5, 4), dpi=100)
+        self.canvas3D = FigureCanvasTkAgg(self.fig3D, master=graph3dFrame)
+        # self.canvas3D.draw()
+
+        self.graph3Dax = self.fig3D.gca(projection="3d")
+
+        t = np.arange(0, 3, .01)
+        self.graph3Dax.plot(t, 2 * np.sin(2 * np.pi * t))
+
+        self.canvas3D.get_tk_widget().grid()
+
+        graph2dFrame = ttk.LabelFrame(mainFrame, text="Fitness history")
+        graph2dFrame.grid(row=0, column=2, padx=self.defPad, pady=self.defPad, sticky=tk.NW + tk.NE)
+
+        # self.onSelectFunction(None)
+        self.initialized = True
+
+    def onSelectFunction(self, evt):
+        if self.initialized is False:
+            return
+        try:
+            func = fn.functionsMap[self.selectedFunction.get()]
+            print(f"{func} selected")
+            func.plot(axes=self.graph3Dax)
+            self.canvas3D.draw()
+            self.canvas3D.flush_events()
+        except:
+            print("Unable to update graph")
+            traceback.print_exc()
 
     def quitApp(self):
         root.destroy()
@@ -241,7 +282,7 @@ class Application(tk.Frame):
     def run(self):
         algo = self.getAlgorithm()
         algo.renderDelay = self.renderDelay.get()
-        algo.solve(maxIterations=self.maxIterations.get())
+        algo.solve(maxIterations=self.maxIterations.get(), ax3d=self.graph3Dax, canvas=self.canvas3D)
         tk.messagebox.showinfo("Done", f"Best found value: {algo.fitness} in point {algo.bestPoint}")
         print(f'Best found value: {algo.fitness} in point {algo.bestPoint}')
         algo.plotFitnessHistory()
