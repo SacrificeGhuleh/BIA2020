@@ -29,11 +29,14 @@ class Application(tk.Frame):
         self.defaultNotebookFrameHeight = 200
 
         self.renderDelay = tk.DoubleVar()
-        self.renderDelay.set(0.5)
+        self.renderDelay.set(0.05)
 
     def createWorkspace(self):
         # Frames
-        mainConfigFrame = ttk.LabelFrame(root, text="Config")
+        mainFrame = ttk.Frame(self.master)
+        mainFrame.grid(row=0, column=0, padx=self.defPad, pady=self.defPad)
+
+        mainConfigFrame = ttk.LabelFrame(mainFrame, text="Config")
         mainConfigFrame.grid(row=0, column=0, padx=self.defPad, pady=self.defPad, sticky=tk.NW + tk.NE)
 
         commonConfigFrame = ttk.LabelFrame(mainConfigFrame, text="Common")
@@ -100,11 +103,10 @@ class Application(tk.Frame):
         }
         self.blindOptions["pointCloud"].set(60)
 
-        pointCloudSizeLabel = ttk.Label(frame, text="Point cloud size")
-        pointCloudSizeLabel.grid(row=0, column=0, padx=self.defPad, pady=self.defPad, sticky=tk.E)
-
-        pointCloudSizeEntry = ttk.Entry(frame, textvariable=self.blindOptions["pointCloud"])
-        pointCloudSizeEntry.grid(row=0, column=1, padx=self.defPad, pady=self.defPad, sticky=tk.W)
+        self.getFrameWithEntry(frame, text="Point cloud size", variable=self.blindOptions["pointCloud"]).grid(row=0,
+                                                                                                              column=0,
+                                                                                                              columnspan=2,
+                                                                                                              sticky=tk.E)
 
         return frame
 
@@ -118,20 +120,18 @@ class Application(tk.Frame):
         self.hillClimbOptions["pointCloud"].set(60)
         self.hillClimbOptions["sigma"].set(0.05)
 
-        pointCloudSizeLabel = ttk.Label(frame, text="Point cloud size")
-        pointCloudSizeLabel.grid(row=0, column=0, padx=self.defPad, pady=self.defPad, sticky=tk.E)
-
-        pointCloudSizeEntry = ttk.Entry(frame, textvariable=self.hillClimbOptions["pointCloud"])
-        pointCloudSizeEntry.grid(row=0, column=1, padx=self.defPad, pady=self.defPad, sticky=tk.W + tk.E)
-
-        sigmaLabel = ttk.Label(frame, text="Sigma")
-        sigmaLabel.grid(row=1, column=0, padx=self.defPad, pady=self.defPad, sticky=tk.E)
-
-        sigmaSlider = ttk.Scale(frame, from_=0.0, to=1.0, variable=self.hillClimbOptions["sigma"])
-        sigmaSlider.grid(row=1, column=1, padx=self.defPad, pady=self.defPad, sticky=tk.W + tk.E)
-
-        sigmaEntry = ttk.Entry(frame, textvariable=self.hillClimbOptions["sigma"])
-        sigmaEntry.grid(row=2, column=1, padx=self.defPad, pady=self.defPad, sticky=tk.W + tk.E)
+        self.getFrameWithEntry(
+                master=frame,
+                text="Point cloud size",
+                variable=self.hillClimbOptions["pointCloud"]
+        ).grid(row=0, column=0, columnspan=2, sticky=tk.E)
+        self.getFrameWithSliderAndEntry(
+                master=frame,
+                text="Sigma",
+                variable=self.hillClimbOptions["sigma"],
+                from_=0,
+                to=1
+        ).grid(row=1, column=0, columnspan=2, sticky=tk.E)
 
         return frame
 
@@ -139,9 +139,83 @@ class Application(tk.Frame):
         frame = ttk.Frame(master, width=self.defaultNotebookFrameWidth, height=self.defaultNotebookFrameHeight)
 
         self.annealingOptions = {
-                "pointCloud": tk.IntVar()
+                "pointCloud": tk.IntVar(),
+                "temp"      : tk.DoubleVar(),
+                "tempMin"   : tk.DoubleVar(),
+                "alpha"     : tk.DoubleVar(),
+                "sigma"     : tk.DoubleVar(),
+                "elitism"   : tk.IntVar(),
+                "repeats"   : tk.IntVar(),
         }
-        self.annealingOptions["pointCloud"].set(60)
+        self.annealingOptions["pointCloud"].set(10)
+        self.annealingOptions["temp"].set(5000)
+        self.annealingOptions["tempMin"].set(0.1)
+        self.annealingOptions["alpha"].set(0.99)
+        self.annealingOptions["sigma"].set(0.1)
+        self.annealingOptions["elitism"].set(True)
+        self.annealingOptions["repeats"].set(5)
+
+        self.getFrameWithEntry(
+                master=frame,
+                text="Point cloud size",
+                variable=self.annealingOptions["pointCloud"]
+        ).grid(row=0, column=0, columnspan=2, sticky=tk.E)
+        self.getFrameWithSliderAndEntry(
+                master=frame,
+                text="Sigma",
+                variable=self.annealingOptions["sigma"],
+                from_=0,
+                to=1
+        ).grid(row=1, column=0, columnspan=2, sticky=tk.E)
+        self.getFrameWithSliderAndEntry(
+                master=frame,
+                text="Temperature",
+                variable=self.annealingOptions["temp"],
+                from_=1,
+                to=10000
+        ).grid(row=2, column=0, columnspan=2, sticky=tk.E)
+        self.getFrameWithSliderAndEntry(
+                master=frame,
+                text="Min temperature",
+                variable=self.annealingOptions["tempMin"],
+                from_=0.0,
+                to=1
+        ).grid(row=3, column=0, columnspan=2, sticky=tk.E)
+        self.getFrameWithSliderAndEntry(
+                master=frame,
+                text="Alpha",
+                variable=self.annealingOptions["alpha"],
+                from_=0.01,
+                to=0.99
+        ).grid(row=4, column=0, columnspan=2, sticky=tk.E)
+        self.getFrameWithSliderAndEntry(
+                master=frame,
+                text="Repeats for T",
+                variable=self.annealingOptions["repeats"],
+                from_=0.0,
+                to=100
+        ).grid(row=5, column=0, columnspan=2, sticky=tk.E)
+        return frame
+
+    def getFrameWithEntry(self, master, text, variable):
+        frame = ttk.Frame(master)
+
+        valLabel = ttk.Label(frame, text=text)
+        valLabel.grid(row=0, column=0, padx=self.defPad, pady=self.defPad, sticky=tk.E)
+        valEntry = ttk.Entry(frame, textvariable=variable)
+        valEntry.grid(row=0, column=1, padx=self.defPad, pady=self.defPad, sticky=tk.W + tk.E)
+
+        return frame
+
+    def getFrameWithSliderAndEntry(self, master, text, variable, from_, to):
+        frame = ttk.Frame(master)
+
+        valLabel = ttk.Label(frame, text=text)
+        valLabel.grid(row=0, column=0, padx=self.defPad, pady=self.defPad, sticky=tk.E)
+        valSlider = ttk.Scale(frame, from_=from_, to=to, variable=variable)
+        valSlider.grid(row=0, column=1, padx=self.defPad, pady=self.defPad, sticky=tk.W + tk.E)
+        valEntry = ttk.Entry(frame, textvariable=variable)
+        valEntry.grid(row=1, column=1, padx=self.defPad, pady=self.defPad, sticky=tk.W + tk.E)
 
         return frame
 
@@ -156,7 +230,7 @@ class Application(tk.Frame):
                                           pointCloudSize=self.hillClimbOptions["pointCloud"].get(),
                                           sigma=self.hillClimbOptions["sigma"].get()),
                 2: alg.AnnealingAlgorithm(function=func,
-                                          pointCloudSize=self.annealingOptions["pointCloud"].get()),
+                                          options=self.annealingOptions),
         }.get(currentTabIdx, None)
 
         print(f"Func: {func}")
