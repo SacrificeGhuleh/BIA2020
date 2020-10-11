@@ -262,14 +262,26 @@ def test():
 
 
 SphereFunctionInstance = SphereFunction(-5.12, 5.12, 30)
-SchwefelFunctionInstance=SchwefelFunction(-500, 500, 30)
-RosenbrockFunctionInstance=RosenbrockFunction(-5, 10, 30)
-RastriginFunctionInstance=RastriginFunction(-5.12, 5.12, 30)
-GriewankFunctionInstance=GriewankFunction(-600, 600, 30)
-LevyFunctionInstance=LevyFunction(-10, 10, 30)
-MichalewiczFunctionInstance=MichalewiczFunction(0, np.pi, 30)
-ZakharovFunctionInstance=ZakharovFunction(-5, 10, 30)
-AckleyFunctionInstance=AckleyFunction(-32.768, 32.768, 60)
+SchwefelFunctionInstance = SchwefelFunction(-500, 500, 30)
+RosenbrockFunctionInstance = RosenbrockFunction(-5, 10, 30)
+RastriginFunctionInstance = RastriginFunction(-5.12, 5.12, 30)
+GriewankFunctionInstance = GriewankFunction(-600, 600, 30)
+LevyFunctionInstance = LevyFunction(-10, 10, 30)
+MichalewiczFunctionInstance = MichalewiczFunction(0, np.pi, 30)
+ZakharovFunctionInstance = ZakharovFunction(-5, 10, 30)
+AckleyFunctionInstance = AckleyFunction(-32.768, 32.768, 60)
+
+functionsMap = {
+        'Sphere'     : SphereFunctionInstance,
+        'Schwefel'   : SchwefelFunctionInstance,
+        'Rosenbrock' : RosenbrockFunctionInstance,
+        'Rastrigin'  : RastriginFunctionInstance,
+        'Griewank'   : GriewankFunctionInstance,
+        'Levy'       : LevyFunctionInstance,
+        'Michalewicz': MichalewiczFunctionInstance,
+        'Zakharov'   : ZakharovFunctionInstance,
+        'Ackley'     : AckleyFunctionInstance
+}
 
 if __name__ == '__main__':
     test()

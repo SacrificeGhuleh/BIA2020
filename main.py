@@ -1,5 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
+from tkinter import messagebox
+import functions as fn
+import algorithms as alg
 
 
 class Application(tk.Frame):
@@ -54,18 +57,18 @@ class Application(tk.Frame):
         # style = ttk.Style(root)
         # style.configure('lefttab.TNotebook', tabposition='wn')
 
-        # tabsFrame = ttk.Notebook(algoConfigFrame, style='lefttab.TNotebook')
-        tabsFrame = ttk.Notebook(algoConfigFrame)
+        # self.tabsFrame = ttk.Notebook(algoConfigFrame, style='lefttab.TNotebook')
+        self.tabsFrame = ttk.Notebook(algoConfigFrame)
 
-        blindFrame = self.createBlindFrame(tabsFrame)
-        hillClimbFrame = self.createHillClimbFrame(tabsFrame)
-        annealingFrame = self.createAnnealingFrame(tabsFrame)
+        blindFrame = self.createBlindFrame(self.tabsFrame)
+        hillClimbFrame = self.createHillClimbFrame(self.tabsFrame)
+        annealingFrame = self.createAnnealingFrame(self.tabsFrame)
 
-        tabsFrame.add(blindFrame, text='Blind')
-        tabsFrame.add(hillClimbFrame, text='Hill Climb')
-        tabsFrame.add(annealingFrame, text='Annealing')
+        self.tabsFrame.add(blindFrame, text='Blind')
+        self.tabsFrame.add(hillClimbFrame, text='Hill Climb')
+        self.tabsFrame.add(annealingFrame, text='Annealing')
 
-        tabsFrame.grid(row=0, column=0, padx=self.defPad, pady=self.defPad, sticky=tk.NW + tk.NE)
+        self.tabsFrame.grid(row=0, column=0, padx=self.defPad, pady=self.defPad, sticky=tk.NW + tk.NE)
 
         runButton = ttk.Button(controlsConfigFrame, text="Run", command=self.run)
         runButton.grid(row=0, column=1, padx=self.defPad, pady=self.defPad, sticky=tk.E)
@@ -94,7 +97,7 @@ class Application(tk.Frame):
 
         self.hillClimbOptions = {
                 "pointCloud": tk.IntVar(),
-                "sigma": tk.DoubleVar()
+                "sigma"     : tk.DoubleVar()
         }
         self.hillClimbOptions["pointCloud"].set(60)
         self.hillClimbOptions["sigma"].set(0.05)
@@ -103,16 +106,16 @@ class Application(tk.Frame):
         pointCloudSizeLabel.grid(row=0, column=0, padx=self.defPad, pady=self.defPad, sticky=tk.E)
 
         pointCloudSizeEntry = ttk.Entry(frame, textvariable=self.hillClimbOptions["pointCloud"])
-        pointCloudSizeEntry.grid(row=0, column=1, padx=self.defPad, pady=self.defPad, sticky=tk.W+tk.E)
+        pointCloudSizeEntry.grid(row=0, column=1, padx=self.defPad, pady=self.defPad, sticky=tk.W + tk.E)
 
         sigmaLabel = ttk.Label(frame, text="Sigma")
         sigmaLabel.grid(row=1, column=0, padx=self.defPad, pady=self.defPad, sticky=tk.E)
 
-        sigmaSlider = ttk.Scale(frame, from_ =0.0, to = 1.0, variable=self.hillClimbOptions["sigma"])
-        sigmaSlider.grid(row=1, column=1, padx=self.defPad, pady=self.defPad, sticky=tk.W+tk.E)
+        sigmaSlider = ttk.Scale(frame, from_=0.0, to=1.0, variable=self.hillClimbOptions["sigma"])
+        sigmaSlider.grid(row=1, column=1, padx=self.defPad, pady=self.defPad, sticky=tk.W + tk.E)
 
         sigmaEntry = ttk.Entry(frame, textvariable=self.hillClimbOptions["sigma"])
-        sigmaEntry.grid(row=2, column=1, padx=self.defPad, pady=self.defPad, sticky=tk.W+tk.E)
+        sigmaEntry.grid(row=2, column=1, padx=self.defPad, pady=self.defPad, sticky=tk.W + tk.E)
 
         return frame
 
@@ -126,9 +129,31 @@ class Application(tk.Frame):
 
         return frame
 
-    def run(self):
-        print('beep boop')
+    def getAlgorithm(self):
+        currentTabIdx = self.tabsFrame.index("current")
+        func = fn.functionsMap[self.selectedFunction.get()]
 
+        algo = {
+                0: alg.BlindAlgorithm(function=func,
+                                      pointCloudSize=self.blindOptions["pointCloud"].get()),
+                1: alg.HillClimbAlgorithm(function=func,
+                                          pointCloudSize=self.hillClimbOptions["pointCloud"].get(),
+                                          sigma=self.hillClimbOptions["sigma"].get()),
+                2: alg.AnnealingAlgorithm(function=func,
+                                          pointCloudSize=self.annealingOptions["pointCloud"].get()),
+        }.get(currentTabIdx, None)
+
+        print(f"Func: {func}")
+        print(f"Current index: {currentTabIdx}")
+        print(f"Alg: {algo}")
+        return algo
+
+    def run(self):
+        algo = self.getAlgorithm()
+        algo.solve(maxIterations=self.maxIterations.get())
+        tk.messagebox.showinfo("Done", f"Best found value: {algo.fitness} in point {algo.bestPoint}")
+        print(f'Best found value: {algo.fitness} in point {algo.bestPoint}')
+        algo.plotFitnessHistory()
 
 if __name__ == '__main__':
     root = tk.Tk()

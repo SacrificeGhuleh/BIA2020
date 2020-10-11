@@ -46,10 +46,11 @@ class Algorithm(metaclass=abc.ABCMeta):
 
         ax = None
         plt.show()
-
+        print("Solving")
         ##
         # Iterate through algorithm:
         for i in range(0, maxIterations):
+            print(f"  iteration: {i}")
             self.solveImpl(currentIterationNumber=i, ax=ax)
 
             # Plot each iteration
@@ -61,6 +62,7 @@ class Algorithm(metaclass=abc.ABCMeta):
 
             self.fitnessHistory.append(self.fitness)
         self.solved = True
+        print("Solved")
 
     ##
     # @brief Abstract function, each algorithm shall be implemented in this function
@@ -197,6 +199,32 @@ class HillClimbAlgorithm(Algorithm):
             # Save data for ploting later
             self.cloudFitnessHistory[0].append(currentIterationNumber)
             self.cloudFitnessHistory[1].append(currentFitness)
+
+##
+# @brief Blind search algorithm implementation
+class AnnealingAlgorithm(Algorithm):
+    def __init__(self, function, pointCloudSize=10, dimensions=3):
+        super().__init__(function, pointCloudSize, dimensions)
+
+    def solveImpl(self, currentIterationNumber, ax=None):
+        ##
+        # 1. Generate uniformly distributed random point across domain
+        self.pointCloud = self.getRandomPointCloudUniform()
+        ##
+        # 2. Iterate through points cloud
+        for randPoint in self.pointCloud:
+            ##
+            # 3. Calculate fitness of each point.
+            # If new fitness is better than currently best fitness, overwrite best fitness and save best found point.
+            currentFitness = self.function.getFunctionValue(randPoint)
+            if currentFitness < self.fitness:
+                self.fitness = currentFitness
+                self.bestPoint = randPoint
+
+            # Save data for ploting later
+            self.cloudFitnessHistory[0].append(currentIterationNumber)
+            self.cloudFitnessHistory[1].append(currentFitness)
+
 
 
 if __name__ == '__main__':
