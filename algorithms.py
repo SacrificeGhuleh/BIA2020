@@ -264,13 +264,30 @@ class AnnealingAlgorithm(Algorithm):
         self.solved = True
         print("Solved")
 
+##
+# @brief Genetic algorithm for solving TSP
+class TravelingSalesmanGeneticAlgorithm(Algorithm):
+    def __init__(self, function, options):
+        self.citiesCount = options['citiesCount']
+        self.dimensions = options['dimensions']
+        self.workspaceSize = []
 
-class VarStub:
-    def __init__(self):
-        self.value = 0
+        for i in range(self.dimensions):
+            self.workspaceSize[i] = options['workspaceSize'][i]
 
-    def get(self):
-        return self.value
+        self.cities = []
+        for i in range(self.citiesCount):
+            self.cities.append([])
 
-    def set(self, val):
-        self.value = val
+
+    def reset(self):
+        super().reset()
+
+    
+    def getRandomCities(self):
+        for i in range(self.citiesCount):
+            city = []
+            for j in range(self.dimensions):
+                city[j] = np.random.uniform(0, self.workspaceSize[j])
+            self.cities[i] = city
+
