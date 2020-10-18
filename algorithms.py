@@ -1,13 +1,14 @@
-import time
-
-import numpy as np
 import abc
+import copy
 
 import matplotlib.pyplot as plt
 import functions as fn
 import sys
 import random
-
+import tkinter
+import numpy as np
+from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
+from matplotlib.figure import Figure
 
 ##
 # @brief Abstract class for algorithms
@@ -264,13 +265,211 @@ class AnnealingAlgorithm(Algorithm):
         self.solved = True
         print("Solved")
 
+class City:
+    idCounter = 0
+    def __init__(self, coords, name):
+        self.coords = coords
+        self.name = name
+        self.id = City.idCounter
+        City.idCounter += 1
 
-class VarStub:
-    def __init__(self):
-        self.value = 0
+    def __eq__(self, other):
+        return self.id == other.id
 
-    def get(self):
-        return self.value
+    def print(self):
+        print(f'City {self.name}, ID {self.id}, coords {self.coords}')
 
-    def set(self, val):
-        self.value = val
+    @staticmethod
+    def generateRandom(bounds):
+        coords = []
+        dimensions = len(bounds)
+        for i in range(dimensions):
+            coords.append(np.random.uniform(0, bounds[i]))
+
+        name = chr(City.idCounter + 65)
+
+        return City(coords, name)
+
+class Path:
+    def __init__(self, cities, shuffle = True):
+        self.cities = copy.deepcopy(cities)
+        if(shuffle):
+            first = self.getInitialCity()
+            otherCities = self.getOtherCitiesList()
+            random.shuffle(otherCities)
+            self.cities = []
+            self.cities.append(first)
+            self.cities.extend(otherCities)
+
+    def getPosVector(self):
+        posVector = [[],[],[]]
+
+        for city in self.cities:
+            posVector[0].append(city.coords[0])
+            posVector[1].append(city.coords[1])
+            posVector[2].append(city.coords[2])
+
+        posVector[0].append(posVector[0][0])
+        posVector[1].append(posVector[1][0])
+        posVector[2].append(posVector[2][0])
+
+        return posVector
+
+    def getInitialCity(self):
+        return self.cities[0]
+
+    def getOtherCitiesList(self):
+        return self.cities[1::]
+
+    def getLength(self):
+        length = 0
+        localCities = []
+
+        localCities.append(self.getInitialCity())
+        localCities.extend(self.getOtherCitiesList())
+        localCities.append(self.getInitialCity())
+
+        for i in range(len(localCities) - 1):
+            a = np.array(localCities[i].coords)
+            b = np.array(localCities[i + 1].coords)
+            length += np.linalg.norm(a - b)
+        return length
+
+    def print(self):
+        print(f'Path length: {self.getLength()}')
+        for city in self.cities:
+            city.print()
+        self.getInitialCity().print()
+
+##
+# @brief Genetic algorithm for solving TSP
+class TravelingSalesmanGeneticAlgorithm(Algorithm):
+    def __init__(self, options):
+        super().__init__(None, None)
+        self.citiesCount = options['citiesCount'].get()
+        self.dimensions = options['dimensions'].get()
+        self.populationSize = options['populationSize'].get()
+        self.mutationChance = options['mutationChance'].get()
+        self.workspaceSize = []
+
+        for i in range(self.dimensions):
+            self.workspaceSize.append(options['workspaceSize'][i])
+
+        self.cities = []
+        for i in range(self.citiesCount):
+            self.cities.append(City.generateRandom(self.workspaceSize))
+
+        self.population = []
+        for i in range(self.populationSize):
+            self.population.append(Path(self.cities))
+
+        self.bestPath = None
+
+    def reset(self):
+        super().reset()
+
+        self.population = []
+        for i in range(self.populationSize):
+            self.population.append(Path(self.cities))
+
+        self.bestPath = None
+
+
+    def plot(self, axes):
+        axes.clear()
+        points = self.population[0].getPosVector()
+
+        axes.scatter(xs=points[0], ys=points[1], zs=points[2], c='g', marker='o', label='cities')
+
+        bestFitness = sys.float_info.max
+        bestPath = None
+        for path in self.population:
+            pathLen = path.getLength()
+            if  pathLen < bestFitness:
+                bestFitness = pathLen
+                bestPath = path
+
+        for path in self.population:
+            posVector = path.getPosVector()
+            if path is bestPath:
+                axes.plot(posVector[0], posVector[1], posVector[2], label=f'fitness: {path.getLength()}', c='r')
+            else:
+                axes.plot(posVector[0], posVector[1], posVector[2], label=f'fitness: {path.getLength()}', alpha = 0.1)
+                pass
+
+        return axes
+
+    def crossover(self, parentA, parentB):
+        crossoverAt = np.round(np.random.uniform(1, self.citiesCount))
+        offspring = Path([], False)
+
+        for i in range (self.citiesCount):
+            if i < crossoverAt:
+                offspring.cities.append(parentA.cities[i])
+
+        notInList = []
+
+        for city in parentB.cities:
+            if city not in offspring.cities:
+                notInList.append(city)
+
+        offspring.cities.extend(notInList)
+        return offspring
+
+    def swapPositions(self, list, pos1, pos2):
+
+        list[pos1], list[pos2] = list[pos2], list[pos1]
+        return list
+
+    def mutate(self, path):
+        if(np.random.uniform(0,1)) < self.mutationChance:
+            indexes = random.sample(range(1, self.citiesCount), 2)
+            self.swapPositions(list=path.cities, pos1=indexes[0], pos2=indexes[1])
+
+
+    def solve(self,  ax3d, canvas, maxIterations):
+        self.reset()
+
+        print("Solving")
+        ##
+        # Iterate through algorithm:
+
+        for i in range(maxIterations):
+            print(f'iteration {i+1} / {maxIterations}')
+            self.solveImpl(currentIterationNumber=i, ax3d=ax3d)
+            # Plot each iteration
+            ax3d = self.plot(axes=ax3d)
+
+            if canvas.figure.stale:
+                canvas.draw_idle()
+            canvas.start_event_loop(self.renderDelay)
+
+            self.fitnessHistory.append(self.fitness)
+            i += 1
+        self.solved = True
+        print("Solved")
+
+        self.bestPath.print()
+
+    def solveImpl(self, currentIterationNumber, ax3d=None):
+        newPopulation = copy.deepcopy(self.population)
+        for j in range(self.citiesCount):
+            parentA = self.population[j]
+
+            indexes = list(range(0, self.populationSize))
+            indexes.remove(j)
+            parentB = self.population[random.choice(indexes)]
+            offspring = self.crossover(parentA, parentB)
+            self.mutate(offspring)
+
+            if (offspring.getLength() < parentA.getLength()):
+                newPopulation[j] = offspring
+        self.population = newPopulation
+
+        self.fitness = sys.float_info.max
+        self.bestPath = None
+        for path in self.population:
+            pathLen = path.getLength()
+            if pathLen < self.fitness:
+                self.fitness = pathLen
+                self.bestPath = path

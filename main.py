@@ -23,7 +23,7 @@ class Application(tk.Frame):
         self.defPad = 2
 
         self.maxIterations = tk.IntVar()
-        self.maxIterations.set(1000)
+        self.maxIterations.set(100)
 
         # Selection boxes
         self.functions = ['Sphere', 'Schwefel', 'Rosenbrock', 'Rastrigin', 'Griewank', 'Levy', 'Michalewicz',
@@ -90,10 +90,12 @@ class Application(tk.Frame):
         blindFrame = self.createBlindFrame(self.tabsFrame)
         hillClimbFrame = self.createHillClimbFrame(self.tabsFrame)
         annealingFrame = self.createAnnealingFrame(self.tabsFrame)
+        tspFrame = self.createTSPFrame(self.tabsFrame)
 
         self.tabsFrame.add(blindFrame, text='Blind')
         self.tabsFrame.add(hillClimbFrame, text='Hill Climb')
         self.tabsFrame.add(annealingFrame, text='Annealing')
+        self.tabsFrame.add(tspFrame, text='TSP')
 
         self.tabsFrame.grid(row=0, column=0, padx=self.defPad, pady=self.defPad, sticky=tk.NW + tk.NE)
 
@@ -238,6 +240,48 @@ class Application(tk.Frame):
         ).grid(row=5, column=0, columnspan=2, sticky=tk.E)
         return frame
 
+    def createTSPFrame(self, master):
+        frame = ttk.Frame(master, width=self.defaultNotebookFrameWidth, height=self.defaultNotebookFrameHeight)
+        self.tspOptions = {
+                'citiesCount'   : tk.IntVar(),
+                'dimensions'    : tk.IntVar(),
+                'populationSize': tk.IntVar(),
+                'workspaceSize' : [10000, 10000, 10000],
+                'mutationChance' : tk.DoubleVar(),
+        }
+
+        self.tspOptions['citiesCount'].set(20)
+        self.tspOptions['dimensions'].set(3)
+        self.tspOptions['populationSize'].set(20)
+        self.tspOptions['mutationChance'].set(0.5)
+
+        self.getFrameWithSliderAndEntry(
+                master=frame,
+                text="Cities count",
+                variable=self.tspOptions["citiesCount"],
+                from_=4,
+                to=100
+        ).grid(row=0, column=0, columnspan=2, sticky=tk.E)
+
+        self.getFrameWithSliderAndEntry(
+                master=frame,
+                text="Population",
+                variable=self.tspOptions["populationSize"],
+                from_=1,
+                to=100
+        ).grid(row=1, column=0, columnspan=2, sticky=tk.E)
+
+        self.getFrameWithSliderAndEntry(
+                master=frame,
+                text="Mutation chance",
+                variable=self.tspOptions["mutationChance"],
+                from_=0,
+                to=1
+        ).grid(row=2, column=0, columnspan=2, sticky=tk.E)
+
+
+        return frame
+
     def getFrameWithEntry(self, master, text, variable):
         frame = ttk.Frame(master)
 
@@ -272,6 +316,7 @@ class Application(tk.Frame):
                                           sigma=self.hillClimbOptions["sigma"].get()),
                 2: alg.AnnealingAlgorithm(function=func,
                                           options=self.annealingOptions),
+                3: alg.TravelingSalesmanGeneticAlgorithm(options=self.tspOptions),
         }.get(currentTabIdx, None)
 
         print(f"Func: {func}")
@@ -283,8 +328,7 @@ class Application(tk.Frame):
         algo = self.getAlgorithm()
         algo.renderDelay = self.renderDelay.get()
         algo.solve(maxIterations=self.maxIterations.get(), ax3d=self.graph3Dax, canvas=self.canvas3D)
-        tk.messagebox.showinfo("Done", f"Best found value: {algo.fitness} in point {algo.bestPoint}")
-        print(f'Best found value: {algo.fitness} in point {algo.bestPoint}')
+        tk.messagebox.showinfo("Done", f"Best found value: {algo.fitness}. For more info check console output.")
         algo.plotFitnessHistory()
 
 
