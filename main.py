@@ -91,11 +91,13 @@ class Application(tk.Frame):
         hillClimbFrame = self.createHillClimbFrame(self.tabsFrame)
         annealingFrame = self.createAnnealingFrame(self.tabsFrame)
         tspFrame = self.createTSPFrame(self.tabsFrame)
+        dgaFrame = self.createDGAFrame(self.tabsFrame)
 
         self.tabsFrame.add(blindFrame, text='Blind')
         self.tabsFrame.add(hillClimbFrame, text='Hill Climb')
         self.tabsFrame.add(annealingFrame, text='Annealing')
         self.tabsFrame.add(tspFrame, text='TSP')
+        self.tabsFrame.add(dgaFrame, text='Differential GA')
 
         self.tabsFrame.grid(row=0, column=0, padx=self.defPad, pady=self.defPad, sticky=tk.NW + tk.NE)
 
@@ -282,6 +284,47 @@ class Application(tk.Frame):
 
         return frame
 
+    def createDGAFrame(self, master):
+        frame = ttk.Frame(master, width=self.defaultNotebookFrameWidth, height=self.defaultNotebookFrameHeight)
+        self.dgaOptions = {
+                'populationSize'   : tk.IntVar(),
+                'dimensions'    : tk.IntVar(),
+                'scalingFactorF': tk.DoubleVar(),
+                'crossoverCR': tk.DoubleVar(),
+        }
+
+        self.dgaOptions['populationSize'].set(20)
+        self.dgaOptions['dimensions'].set(3)
+        self.dgaOptions['scalingFactorF'].set(0.7)
+        self.dgaOptions['crossoverCR'].set(0.7)
+
+        self.getFrameWithSliderAndEntry(
+                master=frame,
+                text="Population size",
+                variable=self.dgaOptions["populationSize"],
+                from_=4,
+                to=100
+        ).grid(row=0, column=0, columnspan=2, sticky=tk.E)
+
+        self.getFrameWithSliderAndEntry(
+                master=frame,
+                text="Scaling factor F",
+                variable=self.dgaOptions["scalingFactorF"],
+                from_=0.1,
+                to=1.1
+        ).grid(row=1, column=0, columnspan=2, sticky=tk.E)
+
+        self.getFrameWithSliderAndEntry(
+                master=frame,
+                text="Crossover factor CR",
+                variable=self.dgaOptions["crossoverCR"],
+                from_=0.0,
+                to=1.0
+        ).grid(row=2, column=0, columnspan=2, sticky=tk.E)
+
+
+        return frame
+
     def getFrameWithEntry(self, master, text, variable):
         frame = ttk.Frame(master)
 
@@ -317,6 +360,7 @@ class Application(tk.Frame):
                 2: alg.AnnealingAlgorithm(function=func,
                                           options=self.annealingOptions),
                 3: alg.TravelingSalesmanGeneticAlgorithm(options=self.tspOptions),
+                4: alg.DifferentialGeneticAlgorithm(function=func,options=self.dgaOptions),
         }.get(currentTabIdx, None)
 
         print(f"Func: {func}")

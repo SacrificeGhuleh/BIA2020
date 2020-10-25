@@ -18,7 +18,7 @@ class Algorithm(metaclass=abc.ABCMeta):
     # @param function Test function instance
     # @param pointCloudSize size of generated point clouds
     # @param number of dimensions
-    def __init__(self, function, pointCloudSize=10, dimensions=3):
+    def __init__(self, function : fn.Function, pointCloudSize=10, dimensions=3):
         if dimensions <= 0:
             raise Exception("dimensions must be unsigned integer number, greater than 0")
         self.function = function
@@ -473,3 +473,66 @@ class TravelingSalesmanGeneticAlgorithm(Algorithm):
             if pathLen < self.fitness:
                 self.fitness = pathLen
                 self.bestPath = path
+
+
+
+##
+# @brief Differential genetic algorithm implementation
+class DifferentialGeneticAlgorithm(Algorithm):
+    def __init__(self, function : fn.Function, options):
+        super().__init__(function, pointCloudSize=options["populationSize"].get(), dimensions=options["dimensions"].get())
+        self.scalingFactorF = options['scalingFactorF'].get()
+        self.crossoverCR = options['crossoverCR'].get()
+
+        self.pointCloud = self.getRandomPointCloudUniform()
+
+    def reset(self):
+        super().reset()
+        self.pointCloud = self.getRandomPointCloudUniform()
+
+    def solveImpl(self, currentIterationNumber, ax3d=None):
+        newPopulation = copy.deepcopy(self.pointCloud)
+        i = 0
+        for individual in self.pointCloud:
+            indexes = list(range(0, self.pointCloudSize))
+
+            idxR1 = random.choice(indexes)
+            r1 = self.pointCloud[idxR1]
+            indexes.remove(idxR1)
+
+            idxR2 = random.choice(indexes)
+            r2 = self.pointCloud[idxR2]
+            indexes.remove(idxR2)
+
+            idxR3 = random.choice(indexes)
+            r3 = self.pointCloud[idxR3]
+            indexes.remove(idxR3)
+            v = []
+            u = []
+
+            for j in range(self.dimensions-1):
+                elem = (r1[j] - r2[j]) * self.scalingFactorF + r3[j]
+                elem = self.clamp(elem, self.function.minimum, self.function.maximum)
+                v.append(elem)
+                u.append(0)
+
+            j_rnd = np.random.randint(0, self.dimensions-1)
+
+            for j in range(self.dimensions-1):
+                if np.random.uniform() < self.crossoverCR or j == j_rnd:
+                    u[j] = v[j]
+                else:
+                    u[j] = individual[j]
+
+            fitness = self.function.getFunctionValue(u)
+            parentFitness = self.function.getFunctionValue(individual)
+
+            if(fitness < self.fitness):
+                self.fitness = fitness # Only for drawing purposes, best fitness in each generation is selected
+
+            if(fitness <= parentFitness):
+                newPopulation[i] = u
+
+            i += 1
+
+        self.pointCloud = newPopulation
