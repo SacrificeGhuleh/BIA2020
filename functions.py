@@ -17,16 +17,26 @@ class Function(metaclass=abc.ABCMeta):
         self.minimum = minimum
         self.maximum = maximum
         self.resolution = resolution
+        self.bufferedValues = {}
 
         self.plotX = np.outer(np.linspace(self.minimum, self.maximum, self.resolution), np.ones(self.resolution))
         self.plotY = self.plotX.copy().T
-        self.plotZ = self.getFunctionValue((self.plotX, self.plotY))
+        self.plotZ = self.getFunctionValueImpl((self.plotX, self.plotY))
         self.name = 'Unnamed function'
+
+    ##
+    # @brief Buffered function
+    def getFunctionValue(self, x: list):
+        tupleX = tuple(x)
+        if tupleX not in self.bufferedValues:
+            self.bufferedValues[tupleX] = self.getFunctionValueImpl(x)
+
+        return self.bufferedValues[tupleX]
 
     ##
     # @brief Abstract function, each function shall be implemented in this function
     @abc.abstractmethod
-    def getFunctionValue(self, x):
+    def getFunctionValueImpl(self, x):
         pass
 
     ##
@@ -72,7 +82,7 @@ class SphereFunction(Function):
         super().__init__(minimum, maximum, resolution)
         self.name = "Sphere function"
 
-    def getFunctionValue(self, x):
+    def getFunctionValueImpl(self, x):
         result = 0.0
         for k in range(0, len(x)):
             result += x[k] ** 2
@@ -88,7 +98,7 @@ class SchwefelFunction(Function):
         super().__init__(minimum, maximum, resolution)
         self.name = "Schwefel function"
 
-    def getFunctionValue(self, x):
+    def getFunctionValueImpl(self, x):
         result = 0.0
         for i in range(0, len(x)):
             result += x[i] * np.sin(np.sqrt(abs(x[i])))
@@ -106,7 +116,7 @@ class RosenbrockFunction(Function):
         super().__init__(minimum, maximum, resolution)
         self.name = "Rosenbrock function"
 
-    def getFunctionValue(self, x):
+    def getFunctionValueImpl(self, x):
         result = 0.0
         for i in range(0, len(x) - 1):
             result += 100 * ((x[i + 1] - (x[i] ** 2)) ** 2) + ((x[i] - 1) ** 2)
@@ -122,7 +132,7 @@ class RastriginFunction(Function):
         super().__init__(minimum, maximum, resolution)
         self.name = "Rastrigin function"
 
-    def getFunctionValue(self, x):
+    def getFunctionValueImpl(self, x):
         result = 0.0
         for i in range(0, len(x)):
             result += (x[i] ** 2) - 10 * np.cos(2 * np.pi * x[i])
@@ -139,7 +149,7 @@ class GriewankFunction(Function):
         super().__init__(minimum, maximum, resolution)
         self.name = "Griewank function"
 
-    def getFunctionValue(self, x):
+    def getFunctionValueImpl(self, x):
         sm = 0.0
         prod = 1.0
         for i in range(0, len(x)):
@@ -157,7 +167,7 @@ class LevyFunction(Function):
         super().__init__(minimum, maximum, resolution)
         self.name = "Levy function"
 
-    def getFunctionValue(self, x):
+    def getFunctionValueImpl(self, x):
         d = len(x)
 
         w = []
@@ -184,7 +194,7 @@ class MichalewiczFunction(Function):
         super().__init__(minimum, maximum, resolution)
         self.name = "Michalewicz function"
 
-    def getFunctionValue(self, x):
+    def getFunctionValueImpl(self, x):
         result = 0
         m = 10
         for i in range(0, len(x)):
@@ -201,7 +211,7 @@ class ZakharovFunction(Function):
         super().__init__(minimum, maximum, resolution)
         self.name = "Zakharov function"
 
-    def getFunctionValue(self, x):
+    def getFunctionValueImpl(self, x):
         sum1 = 0
         sum2 = 0
         for i in range(0, len(x)):
@@ -220,7 +230,7 @@ class AckleyFunction(Function):
         super().__init__(minimum, maximum, resolution)
         self.name = "Ackley function"
 
-    def getFunctionValue(self, x):
+    def getFunctionValueImpl(self, x):
         a = 20
         b = 0.2
         c = 2 * np.pi
