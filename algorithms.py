@@ -10,6 +10,7 @@ import numpy as np
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 from matplotlib.figure import Figure
 
+
 ##
 # @brief Abstract class for algorithms
 class Algorithm(metaclass=abc.ABCMeta):
@@ -18,7 +19,7 @@ class Algorithm(metaclass=abc.ABCMeta):
     # @param function Test function instance
     # @param pointCloudSize size of generated point clouds
     # @param number of dimensions
-    def __init__(self, function : fn.Function, pointCloudSize=10, dimensions=3):
+    def __init__(self, function: fn.Function, pointCloudSize=10, dimensions=3):
         if dimensions <= 0:
             raise Exception("dimensions must be unsigned integer number, greater than 0")
         self.function = function
@@ -46,9 +47,8 @@ class Algorithm(metaclass=abc.ABCMeta):
     # @remarks This function implements most common code for all algorithms (e.g. drawing)
     # @param maxIterations maximum number of iterations
     def solve(self, ax3d, canvas, maxIterations):
-        self.reset()
-
         print("Solving")
+        self.prepareSolve()
         ##
         # Iterate through algorithm:
         for i in range(0, maxIterations):
@@ -56,7 +56,8 @@ class Algorithm(metaclass=abc.ABCMeta):
             self.solveImpl(currentIterationNumber=i, ax3d=ax3d)
 
             # Plot each iteration
-            ax3d = self.function.plot(pointsCloud=self.pointCloud, bestPoint=self.bestPoint, surfaceAlpha=0.5, axes=ax3d)
+            ax3d = self.function.plot(pointsCloud=self.pointCloud, bestPoint=self.bestPoint, surfaceAlpha=0.5,
+                                      axes=ax3d)
 
             if canvas.figure.stale:
                 canvas.draw_idle()
@@ -65,6 +66,11 @@ class Algorithm(metaclass=abc.ABCMeta):
             self.fitnessHistory.append(self.fitness)
         self.solved = True
         print("Solved")
+
+    ##
+    # Common function for preparation before main loop
+    def prepareSolve(self):
+        self.reset()
 
     ##
     # @brief Abstract function, each algorithm shall be implemented in this function
@@ -139,6 +145,13 @@ class Algorithm(metaclass=abc.ABCMeta):
     # @param upperBound upper bound of defined interval
     def clamp(self, num, lowerBound, upperBound):
         return max(lowerBound, min(num, upperBound))
+
+    def inBounds(self, point):
+        inBounds = True
+        for num in point:
+            if num < self.function.minimum or num > self.function.maximum:
+                inBounds = False
+        return inBounds
 
 
 ##
@@ -227,7 +240,8 @@ class AnnealingAlgorithm(Algorithm):
         # 1. Generate normally distributed random point across domain
         self.pointCloud = self.getRandomPointCloudNormal(self.bestPoint, self.sigma, cloudSize=self.pointCloudSize)
         for repeat in range(self.repeatsForTemperature):
-            print(f"  iteration: {currentIterationNumber}, temperature: {self.curTemp} / minimal temperature: {self.tempMin}")
+            print(
+                    f"  iteration: {currentIterationNumber}, temperature: {self.curTemp} / minimal temperature: {self.tempMin}")
             ##
             # randomly select point from the set of neighbors
             neighbor = random.choice(self.pointCloud)
@@ -243,7 +257,7 @@ class AnnealingAlgorithm(Algorithm):
                     self.fitness = neighborFitness
         self.curTemp = self.alpha * self.curTemp
 
-    def solve(self,  ax3d, canvas, maxIterations):
+    def solve(self, ax3d, canvas, maxIterations):
         self.reset()
 
         print("Solving")
@@ -254,7 +268,8 @@ class AnnealingAlgorithm(Algorithm):
             self.solveImpl(currentIterationNumber=i, ax3d=ax3d)
 
             # Plot each iteration
-            ax3d = self.function.plot(pointsCloud=self.pointCloud, bestPoint=self.bestPoint, surfaceAlpha=0.5, axes=ax3d)
+            ax3d = self.function.plot(pointsCloud=self.pointCloud, bestPoint=self.bestPoint, surfaceAlpha=0.5,
+                                      axes=ax3d)
 
             if canvas.figure.stale:
                 canvas.draw_idle()
@@ -265,8 +280,10 @@ class AnnealingAlgorithm(Algorithm):
         self.solved = True
         print("Solved")
 
+
 class City:
     idCounter = 0
+
     def __init__(self, coords, name):
         self.coords = coords
         self.name = name
@@ -290,10 +307,11 @@ class City:
 
         return City(coords, name)
 
+
 class Path:
-    def __init__(self, cities, shuffle = True):
+    def __init__(self, cities, shuffle=True):
         self.cities = copy.deepcopy(cities)
-        if(shuffle):
+        if (shuffle):
             first = self.getInitialCity()
             otherCities = self.getOtherCitiesList()
             random.shuffle(otherCities)
@@ -302,7 +320,7 @@ class Path:
             self.cities.extend(otherCities)
 
     def getPosVector(self):
-        posVector = [[],[],[]]
+        posVector = [[], [], []]
 
         for city in self.cities:
             posVector[0].append(city.coords[0])
@@ -341,6 +359,7 @@ class Path:
             city.print()
         self.getInitialCity().print()
 
+
 ##
 # @brief Genetic algorithm for solving TSP
 class TravelingSalesmanGeneticAlgorithm(Algorithm):
@@ -374,7 +393,6 @@ class TravelingSalesmanGeneticAlgorithm(Algorithm):
 
         self.bestPath = None
 
-
     def plot(self, axes):
         axes.clear()
         points = self.population[0].getPosVector()
@@ -385,7 +403,7 @@ class TravelingSalesmanGeneticAlgorithm(Algorithm):
         bestPath = None
         for path in self.population:
             pathLen = path.getLength()
-            if  pathLen < bestFitness:
+            if pathLen < bestFitness:
                 bestFitness = pathLen
                 bestPath = path
 
@@ -394,7 +412,7 @@ class TravelingSalesmanGeneticAlgorithm(Algorithm):
             if path is bestPath:
                 axes.plot(posVector[0], posVector[1], posVector[2], label=f'fitness: {path.getLength()}', c='r')
             else:
-                axes.plot(posVector[0], posVector[1], posVector[2], label=f'fitness: {path.getLength()}', alpha = 0.1)
+                axes.plot(posVector[0], posVector[1], posVector[2], label=f'fitness: {path.getLength()}', alpha=0.1)
                 pass
 
         return axes
@@ -403,7 +421,7 @@ class TravelingSalesmanGeneticAlgorithm(Algorithm):
         crossoverAt = np.round(np.random.uniform(1, self.citiesCount))
         offspring = Path([], False)
 
-        for i in range (self.citiesCount):
+        for i in range(self.citiesCount):
             if i < crossoverAt:
                 offspring.cities.append(parentA.cities[i])
 
@@ -422,12 +440,11 @@ class TravelingSalesmanGeneticAlgorithm(Algorithm):
         return list
 
     def mutate(self, path):
-        if(np.random.uniform(0,1)) < self.mutationChance:
+        if (np.random.uniform(0, 1)) < self.mutationChance:
             indexes = random.sample(range(1, self.citiesCount), 2)
             self.swapPositions(list=path.cities, pos1=indexes[0], pos2=indexes[1])
 
-
-    def solve(self,  ax3d, canvas, maxIterations):
+    def solve(self, ax3d, canvas, maxIterations):
         self.reset()
 
         print("Solving")
@@ -435,7 +452,7 @@ class TravelingSalesmanGeneticAlgorithm(Algorithm):
         # Iterate through algorithm:
 
         for i in range(maxIterations):
-            print(f'iteration {i+1} / {maxIterations}')
+            print(f'iteration {i + 1} / {maxIterations}')
             self.solveImpl(currentIterationNumber=i, ax3d=ax3d)
             # Plot each iteration
             ax3d = self.plot(axes=ax3d)
@@ -475,12 +492,12 @@ class TravelingSalesmanGeneticAlgorithm(Algorithm):
                 self.bestPath = path
 
 
-
 ##
 # @brief Differential genetic algorithm implementation
 class DifferentialGeneticAlgorithm(Algorithm):
-    def __init__(self, function : fn.Function, options):
-        super().__init__(function, pointCloudSize=options["populationSize"].get(), dimensions=options["dimensions"].get())
+    def __init__(self, function: fn.Function, options):
+        super().__init__(function, pointCloudSize=options["populationSize"].get(),
+                         dimensions=options["dimensions"].get())
         self.scalingFactorF = options['scalingFactorF'].get()
         self.crossoverCR = options['crossoverCR'].get()
 
@@ -510,15 +527,15 @@ class DifferentialGeneticAlgorithm(Algorithm):
             v = []
             u = []
 
-            for j in range(self.dimensions-1):
+            for j in range(self.dimensions - 1):
                 elem = (r1[j] - r2[j]) * self.scalingFactorF + r3[j]
                 elem = self.clamp(elem, self.function.minimum, self.function.maximum)
                 v.append(elem)
                 u.append(0)
 
-            j_rnd = np.random.randint(0, self.dimensions-1)
+            j_rnd = np.random.randint(0, self.dimensions - 1)
 
-            for j in range(self.dimensions-1):
+            for j in range(self.dimensions - 1):
                 if np.random.uniform() < self.crossoverCR or j == j_rnd:
                     u[j] = v[j]
                 else:
@@ -527,12 +544,67 @@ class DifferentialGeneticAlgorithm(Algorithm):
             fitness = self.function.getFunctionValue(u)
             parentFitness = self.function.getFunctionValue(individual)
 
-            if(fitness < self.fitness):
-                self.fitness = fitness # Only for drawing purposes, best fitness in each generation is selected
+            if (fitness < self.fitness):
+                self.fitness = fitness  # Only for drawing purposes, best fitness in each generation is selected
 
-            if(fitness <= parentFitness):
+            if (fitness <= parentFitness):
                 newPopulation[i] = u
 
             i += 1
 
         self.pointCloud = newPopulation
+
+
+class SelfOrganizingMigrationAlgorithm(Algorithm):
+    def __init__(self, function: fn.Function, options):
+        super().__init__(function, pointCloudSize=options["populationSize"].get(),
+                         dimensions=options["dimensions"].get())
+        self.pathLength = options['pathLength'].get()
+        self.step = options['step'].get()
+        self.perturbation = options['perturbation'].get()
+        self.minDiv = options['minDiv'].get()
+
+    def reset(self):
+        super().reset()
+        self.pointCloud = self.getRandomPointCloudUniform()
+
+    def getPerturbationVector(self):
+        perturbationVector = []
+        for i in range(0, self.dimensions - 1):
+            if np.random.uniform(0, 1) < self.perturbation:
+                perturbationVector.append(1)
+            else:
+                perturbationVector.append(0)
+
+        # Force perturbation vector contain at least one '1'
+        perturbationVectorsum = 0
+        for i in range(0, self.dimensions - 1):
+            perturbationVectorsum = perturbationVector[i]
+
+        if perturbationVectorsum == 0:
+            idx = random.randrange(len(perturbationVector))
+            perturbationVector[idx] = 1
+        return perturbationVector
+
+    def getLeader(self):
+        self.bestPoint = self.function.getMinimum(self.pointCloud)
+        return self.bestPoint
+
+    def solveImpl(self, currentIterationNumber, ax3d=None):
+        for idx in range(0, len(self.pointCloud)):
+            point = self.pointCloud[idx]
+            jumps = []
+            perturbationVector = self.getPerturbationVector()
+            for i in range(0, round(self.pathLength / self.step)):
+                jumpX = point[0] + (self.bestPoint[0] - point[0]) * (i * self.step) * perturbationVector[0]
+                jumpY = point[1] + (self.bestPoint[1] - point[1]) * (i * self.step) * perturbationVector[1]
+                jumpPoint = [jumpX, jumpY]
+                if self.inBounds(jumpPoint):
+                    jumps.append(jumpPoint)
+            self.pointCloud[idx] = self.function.getMinimum(jumps)
+        self.getLeader()
+        self.fitness = self.function.getFunctionValue(self.bestPoint)
+
+    def prepareSolve(self):
+        super().prepareSolve()
+        self.getLeader()

@@ -1,5 +1,6 @@
 import numpy as np
 import abc
+import sys
 
 import matplotlib.pyplot as plt
 import time
@@ -32,6 +33,18 @@ class Function(metaclass=abc.ABCMeta):
             self.bufferedValues[tupleX] = self.getFunctionValueImpl(x)
 
         return self.bufferedValues[tupleX]
+
+    ##
+    # @brief Get minimum coords from vector x
+    def getMinimum(self, x: list):
+        minCoords = None
+        minVal = sys.float_info.max
+        for coords in x:
+            val = self.getFunctionValue(coords)
+            if val < minVal:
+                minVal = val
+                minCoords = coords
+        return minCoords
 
     ##
     # @brief Abstract function, each function shall be implemented in this function

@@ -6,7 +6,7 @@ import traceback
 import functions as fn
 import algorithms as alg
 import numpy as np
-from matplotlib.backends.backend_tkagg import ( FigureCanvasTkAgg, NavigationToolbar2Tk)
+from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 from matplotlib.figure import Figure
 
 
@@ -92,12 +92,14 @@ class Application(tk.Frame):
         annealingFrame = self.createAnnealingFrame(self.tabsFrame)
         tspFrame = self.createTSPFrame(self.tabsFrame)
         dgaFrame = self.createDGAFrame(self.tabsFrame)
+        somaFrame = self.createSomaFrame(self.tabsFrame)
 
         self.tabsFrame.add(blindFrame, text='Blind')
         self.tabsFrame.add(hillClimbFrame, text='Hill Climb')
         self.tabsFrame.add(annealingFrame, text='Annealing')
         self.tabsFrame.add(tspFrame, text='TSP')
         self.tabsFrame.add(dgaFrame, text='Differential GA')
+        self.tabsFrame.add(somaFrame, text='SOMA')
 
         self.tabsFrame.grid(row=0, column=0, padx=self.defPad, pady=self.defPad, sticky=tk.NW + tk.NE)
 
@@ -249,7 +251,7 @@ class Application(tk.Frame):
                 'dimensions'    : tk.IntVar(),
                 'populationSize': tk.IntVar(),
                 'workspaceSize' : [10000, 10000, 10000],
-                'mutationChance' : tk.DoubleVar(),
+                'mutationChance': tk.DoubleVar(),
         }
 
         self.tspOptions['citiesCount'].set(20)
@@ -281,16 +283,15 @@ class Application(tk.Frame):
                 to=1
         ).grid(row=2, column=0, columnspan=2, sticky=tk.E)
 
-
         return frame
 
     def createDGAFrame(self, master):
         frame = ttk.Frame(master, width=self.defaultNotebookFrameWidth, height=self.defaultNotebookFrameHeight)
         self.dgaOptions = {
-                'populationSize'   : tk.IntVar(),
+                'populationSize': tk.IntVar(),
                 'dimensions'    : tk.IntVar(),
                 'scalingFactorF': tk.DoubleVar(),
-                'crossoverCR': tk.DoubleVar(),
+                'crossoverCR'   : tk.DoubleVar(),
         }
 
         self.dgaOptions['populationSize'].set(20)
@@ -322,6 +323,65 @@ class Application(tk.Frame):
                 to=1.0
         ).grid(row=2, column=0, columnspan=2, sticky=tk.E)
 
+        return frame
+
+    def createSomaFrame(self, master):
+        frame = ttk.Frame(master, width=self.defaultNotebookFrameWidth, height=self.defaultNotebookFrameHeight)
+        self.somaOptions = {
+                'populationSize': tk.IntVar(),
+                'dimensions'    : tk.IntVar(),
+                'pathLength'    : tk.DoubleVar(),
+                'step'          : tk.DoubleVar(),
+                'perturbation'  : tk.DoubleVar(),
+                'minDiv'        : tk.DoubleVar(),
+        }
+
+        self.somaOptions['populationSize'].set(20)
+        self.somaOptions['dimensions'].set(3)
+        self.somaOptions['pathLength'].set(3)
+        self.somaOptions['step'].set(0.11)
+        self.somaOptions['perturbation'].set(0.1)
+        self.somaOptions['minDiv'].set(-0.1)
+
+        self.getFrameWithSliderAndEntry(
+                master=frame,
+                text="Population size",
+                variable=self.somaOptions["populationSize"],
+                from_=10,
+                to=100
+        ).grid(row=0, column=0, columnspan=2, sticky=tk.E)
+
+        self.getFrameWithSliderAndEntry(
+                master=frame,
+                text="Path length",
+                variable=self.somaOptions["pathLength"],
+                from_=1.1,
+                to=10
+        ).grid(row=1, column=0, columnspan=2, sticky=tk.E)
+
+        self.getFrameWithSliderAndEntry(
+                master=frame,
+                text="Step",
+                variable=self.somaOptions["step"],
+                from_=0.11,
+                to=self.somaOptions["pathLength"].get()
+        ).grid(row=2, column=0, columnspan=2, sticky=tk.E)
+
+        self.getFrameWithSliderAndEntry(
+                master=frame,
+                text="Perturbation",
+                variable=self.somaOptions["perturbation"],
+                from_=0,
+                to=1
+        ).grid(row=3, column=0, columnspan=2, sticky=tk.E)
+
+        self.getFrameWithSliderAndEntry(
+                master=frame,
+                text="Min Div",
+                variable=self.somaOptions["minDiv"],
+                from_=1,
+                to=100
+        ).grid(row=4, column=0, columnspan=2, sticky=tk.E)
 
         return frame
 
@@ -360,7 +420,8 @@ class Application(tk.Frame):
                 2: alg.AnnealingAlgorithm(function=func,
                                           options=self.annealingOptions),
                 3: alg.TravelingSalesmanGeneticAlgorithm(options=self.tspOptions),
-                4: alg.DifferentialGeneticAlgorithm(function=func,options=self.dgaOptions),
+                4: alg.DifferentialGeneticAlgorithm(function=func, options=self.dgaOptions),
+                5: alg.SelfOrganizingMigrationAlgorithm(function=func, options=self.somaOptions),
         }.get(currentTabIdx, None)
 
         print(f"Func: {func}")
