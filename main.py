@@ -410,6 +410,7 @@ class Application(tk.Frame):
     def getAlgorithm(self):
         currentTabIdx = self.tabsFrame.index("current")
         func = fn.functionsMap[self.selectedFunction.get()]
+        func.clearDict()
 
         algo = {
                 0: alg.BlindAlgorithm(function=func,
@@ -427,6 +428,7 @@ class Application(tk.Frame):
         print(f"Func: {func}")
         print(f"Current index: {currentTabIdx}")
         print(f"Alg: {algo}")
+
         return algo
 
     def run(self):

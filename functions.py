@@ -26,6 +26,11 @@ class Function(metaclass=abc.ABCMeta):
         self.name = 'Unnamed function'
 
     ##
+    # @brief clear dictionary
+    def clearDict(self):
+        self.bufferedValues.clear()
+
+    ##
     # @brief Buffered function
     def getFunctionValue(self, x: list):
         tupleX = tuple(x)
