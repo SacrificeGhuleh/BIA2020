@@ -8,6 +8,7 @@ import algorithms as alg
 import numpy as np
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 from matplotlib.figure import Figure
+from mpl_toolkits.mplot3d import Axes3D
 
 
 class Application(tk.Frame):
