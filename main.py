@@ -8,7 +8,7 @@ import algorithms as alg
 import numpy as np
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 from matplotlib.figure import Figure
-from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d import Axes3D  # This import HAS to stay here !!!
 
 
 class Application(tk.Frame):
@@ -62,7 +62,7 @@ class Application(tk.Frame):
         functionLabel = ttk.Label(commonConfigFrame, text="Function")
         functionLabel.grid(row=0, column=0, padx=self.defPad, pady=self.defPad, sticky=tk.E)
 
-        functionOption = ttk.OptionMenu(commonConfigFrame, self.selectedFunction, *self.functions)
+        functionOption = ttk.OptionMenu(commonConfigFrame, self.selectedFunction, None, *self.functions)
         functionOption.grid(row=0, column=1, padx=self.defPad, pady=self.defPad, sticky=tk.W)
 
         functionOption.bind("<Configure>", self.onSelectFunction)
