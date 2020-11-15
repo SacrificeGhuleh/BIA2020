@@ -94,6 +94,7 @@ class Application(tk.Frame):
         tspFrame = self.createTSPFrame(self.tabsFrame)
         dgaFrame = self.createDGAFrame(self.tabsFrame)
         somaFrame = self.createSomaFrame(self.tabsFrame)
+        antFrame = self.createAntFrame(self.tabsFrame)
 
         self.tabsFrame.add(blindFrame, text='Blind')
         self.tabsFrame.add(hillClimbFrame, text='Hill Climb')
@@ -101,6 +102,7 @@ class Application(tk.Frame):
         self.tabsFrame.add(tspFrame, text='TSP')
         self.tabsFrame.add(dgaFrame, text='Differential GA')
         self.tabsFrame.add(somaFrame, text='SOMA')
+        self.tabsFrame.add(antFrame, text='Ants')
 
         self.tabsFrame.grid(row=0, column=0, padx=self.defPad, pady=self.defPad, sticky=tk.NW + tk.NE)
 
@@ -386,6 +388,67 @@ class Application(tk.Frame):
 
         return frame
 
+    def createAntFrame(self, master):
+        frame = ttk.Frame(master, width=self.defaultNotebookFrameWidth, height=self.defaultNotebookFrameHeight)
+        self.antOptions = {
+                'dimensions'     : tk.IntVar(),
+                'citiesCount'    : tk.IntVar(),
+                'evaporization'  : tk.DoubleVar(),
+                'initialFeromone': tk.DoubleVar(),
+                'alpha'          : tk.DoubleVar(),
+                'beta'           : tk.DoubleVar(),
+                'workspaceSize'  : [100, 100, 100],
+        }
+
+        self.antOptions['dimensions'].set(3)
+        self.antOptions['citiesCount'].set(20)
+        self.antOptions['evaporization'].set(0.5)
+        self.antOptions['initialFeromone'].set(1)
+        self.antOptions['alpha'].set(1)
+        self.antOptions['beta'].set(2)
+
+        self.getFrameWithSliderAndEntry(
+                master=frame,
+                text="Cities count",
+                variable=self.antOptions["citiesCount"],
+                from_=4,
+                to=100
+        ).grid(row=0, column=0, columnspan=2, sticky=tk.E)
+
+        self.getFrameWithSliderAndEntry(
+                master=frame,
+                text="Evaporization",
+                variable=self.antOptions["evaporization"],
+                from_=0.001,
+                to=0.99
+        ).grid(row=1, column=0, columnspan=2, sticky=tk.E)
+
+        self.getFrameWithSliderAndEntry(
+                master=frame,
+                text="Initial pheromone",
+                variable=self.antOptions["initialFeromone"],
+                from_=0.1,
+                to=10
+        ).grid(row=2, column=0, columnspan=2, sticky=tk.E)
+
+        self.getFrameWithSliderAndEntry(
+                master=frame,
+                text="Pheromone importance",
+                variable=self.antOptions["alpha"],
+                from_=0,
+                to=10
+        ).grid(row=3, column=0, columnspan=2, sticky=tk.E)
+
+        self.getFrameWithSliderAndEntry(
+                master=frame,
+                text="Distance importance",
+                variable=self.antOptions["beta"],
+                from_=0,
+                to=10
+        ).grid(row=4, column=0, columnspan=2, sticky=tk.E)
+
+        return frame
+
     def getFrameWithEntry(self, master, text, variable):
         frame = ttk.Frame(master)
 
@@ -424,6 +487,7 @@ class Application(tk.Frame):
                 3: alg.TravelingSalesmanGeneticAlgorithm(options=self.tspOptions),
                 4: alg.DifferentialGeneticAlgorithm(function=func, options=self.dgaOptions),
                 5: alg.SelfOrganizingMigrationAlgorithm(function=func, options=self.somaOptions),
+                6: alg.TravelingSalesmanAntColonyAlgorithm(options=self.antOptions),
         }.get(currentTabIdx, None)
 
         print(f"Func: {func}")

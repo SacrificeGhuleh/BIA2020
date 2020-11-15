@@ -2,6 +2,8 @@ import abc
 import copy
 
 import matplotlib.pyplot as plt
+from typing import List
+
 import functions as fn
 import sys
 import random
@@ -292,6 +294,10 @@ class City:
 
     def __eq__(self, other):
         return self.id == other.id
+
+    def __hash__(self) -> int:
+        str = f'City {self.name}, ID {self.id}, coords {self.coords}'
+        return hash(str)
 
     def print(self):
         print(f'City {self.name}, ID {self.id}, coords {self.coords}')
@@ -608,3 +614,256 @@ class SelfOrganizingMigrationAlgorithm(Algorithm):
     def prepareSolve(self):
         super().prepareSolve()
         self.getLeader()
+
+
+class Ant:
+    def __init__(self, city: City, allCities: List[City]) -> None:
+        super().__init__()
+        self.startingCity = city
+        self.previousCity = None
+        self.city = city
+        self.allCities = allCities
+        self.visitedCities = []
+        self.unvisitedCities = []
+
+        for iterCity in allCities:
+            if self.startingCity.id != iterCity.id:
+                self.unvisitedCities.append(iterCity)
+
+    def reset(self):
+        self.previousCity = None
+        self.city = self.startingCity
+
+        self.visitedCities = []
+        self.unvisitedCities = []
+
+        for iterCity in self.allCities:
+            if self.startingCity.id != iterCity.id:
+                self.unvisitedCities.append(iterCity)
+
+    def moveTo(self, newCity: City):
+        try:
+            self.previousCity = self.city
+            self.visitedCities.append(self.city)
+            self.city = newCity
+            if newCity != self.startingCity:
+                self.unvisitedCities.remove(newCity)
+        except:
+            print('Break here')
+
+    def getPathLen(self):
+        length = 0
+        localCities = []
+
+        localCities.extend(self.visitedCities)
+        # localCities.append(self.startingCity)
+
+        for i in range(len(localCities) - 1):
+            a = np.array(localCities[i].coords)
+            b = np.array(localCities[i + 1].coords)
+            length += np.linalg.norm(a - b)
+        return length
+
+    def getPosVector(self):
+        posVector = [[], [], []]
+
+        for city in self.visitedCities:
+            posVector[0].append(city.coords[0])
+            posVector[1].append(city.coords[1])
+            posVector[2].append(city.coords[2])
+        #
+        # posVector[0].append(posVector[0][0])
+        # posVector[1].append(posVector[1][0])
+        # posVector[2].append(posVector[2][0])
+
+        return posVector
+
+    def print(self):
+        print(f'Path length: {self.getPathLen()}')
+        for city in self.visitedCities:
+            city.print()
+        # self.visitedCities[0].print()
+
+
+class TravelingSalesmanAntColonyAlgorithm(Algorithm):
+    def __init__(self, options):
+        super().__init__(function=None,
+                         pointCloudSize=None,
+                         dimensions=options["dimensions"].get())
+        self.citiesCount = options['citiesCount'].get()
+        self.vaporizationCoef = options['evaporization'].get()
+        self.initialFeromone = options['initialFeromone'].get()
+        self.alphaPheromoneImportance = options['alpha'].get()
+        self.betaDistanceImportance = options['beta'].get()
+
+        self.workspaceSize = []
+
+        for i in range(self.dimensions):
+            self.workspaceSize.append(options['workspaceSize'][i])
+
+        self.cities = []
+        self.antColony = []
+        self.citiesIndices = {}
+        for i in range(self.citiesCount):
+            city = City.generateRandom(self.workspaceSize)
+            self.cities.append(city)
+            self.citiesIndices[city] = i
+
+        for i in range(self.citiesCount):
+            ant = Ant(self.cities[i], self.cities)
+            self.antColony.append(ant)
+
+        self.bestAnt = None
+
+        self.distanceMatrix = np.array(self.calculateDistanceMatrix(self.cities))
+        self.pheromoneMatrix = np.array(self.calculateFeromoneMatrix(self.cities))
+        self.visibilityMatrix = 1. / self.distanceMatrix
+
+    def calculateDistanceMatrix(self, cities: List[City]):
+        distanceMatrix = []
+
+        for cityA in cities:
+            row = []
+            for cityB in cities:
+                if cityA.id == cityB.id:
+                    row.append(0)
+                else:
+                    row.append(np.linalg.norm(np.array(cityA.coords) - np.array(cityB.coords)))
+            distanceMatrix.append(row)
+        return distanceMatrix
+
+    def calculateFeromoneMatrix(self, cities: List[City]):
+        feromoneMatrix = []
+        for cityA in cities:
+            row = []
+            for cityB in cities:
+                if cityA.id == cityB.id:
+                    row.append(0)
+                else:
+                    row.append(self.initialFeromone)
+                    pass
+            feromoneMatrix.append(row)
+        return feromoneMatrix
+
+    def getVisibility(self, cityA: City, cityB: City):
+        cityAidx = self.citiesIndices[cityA]
+        cityBidx = self.citiesIndices[cityB]
+        return self.visibilityMatrix[cityAidx][cityBidx]
+
+    def getDistance(self, cityA: City, cityB: City):
+        cityAidx = self.citiesIndices[cityA]
+        cityBidx = self.citiesIndices[cityB]
+        return self.distanceMatrix[cityAidx][cityBidx]
+
+    def getWeightedVisibility(self, cityA: City, cityB: City):
+        return np.power(self.getVisibility(cityA, cityB), self.betaDistanceImportance)
+
+    def getPheromone(self, cityA: City, cityB: City):
+        cityAidx = self.citiesIndices[cityA]
+        cityBidx = self.citiesIndices[cityB]
+        return self.pheromoneMatrix[cityAidx][cityBidx]
+
+    def getWeightedPheromone(self, cityA: City, cityB: City):
+        return np.power(self.getPheromone(cityA, cityB), self.alphaPheromoneImportance)
+
+    def calculateProbability(self, ant: Ant, city: City):
+        if ant.city.id == city.id:
+            return 0
+
+        sumTauEta = 0
+
+        for iterCity in ant.unvisitedCities:
+            tau = self.getWeightedPheromone(ant.city, iterCity)
+            eta = self.getWeightedVisibility(ant.city, iterCity)
+            sumTauEta += tau * eta
+
+        tau = self.getWeightedPheromone(ant.city, city)
+        eta = self.getWeightedVisibility(ant.city, city)
+        return (tau * eta) / sumTauEta
+
+    def updatePheromone(self):
+        self.pheromoneMatrix = (1 - self.vaporizationCoef) * self.pheromoneMatrix
+
+        for ant in self.antColony:
+            d = 1 / ant.getPathLen()
+
+            localCities = []
+
+            localCities.extend(ant.visitedCities)
+
+            for i in range(len(localCities) - 1):
+                cityAidx = self.citiesIndices[localCities[i]]
+                cityBidx = self.citiesIndices[localCities[i + 1]]
+                self.pheromoneMatrix[cityAidx][cityBidx] += d
+
+    def solveImpl(self, currentIterationNumber, ax3d=None):
+        for ant in self.antColony:
+            ant.reset()
+            marching = True
+            nextCity = None
+            while marching:
+                if len(ant.unvisitedCities) == 0:
+                    if ant.city.id == ant.startingCity.id:
+                        marching = False
+                    else:
+                        nextCity = ant.startingCity
+                else:
+                    distribution = []
+                    for city in ant.unvisitedCities:
+                        probability = self.calculateProbability(ant, city)
+                        distribution.append(probability)
+
+                    nextCity = np.random.choice(a=ant.unvisitedCities, p=distribution)
+                ant.moveTo(nextCity)
+            pass
+        self.updatePheromone()
+        bestAnt = None
+        fitness = sys.float_info.max
+        for ant in self.antColony:
+            length = ant.getPathLen()
+            if length < fitness:
+                bestAnt = ant
+                fitness = ant.getPathLen()
+        self.bestAnt = bestAnt
+        self.fitness = fitness
+
+    def plot(self, axes):
+        axes.clear()
+
+        points = self.antColony[0].getPosVector()
+
+        axes.scatter(xs=points[0], ys=points[1], zs=points[2], c='g', marker='o', label='cities')
+
+        for ant in self.antColony:
+            posVector = ant.getPosVector()
+            if ant is self.bestAnt:
+                axes.plot(posVector[0], posVector[1], posVector[2], label=f'fitness: {ant.getPathLen()}', c='r')
+            else:
+                axes.plot(posVector[0], posVector[1], posVector[2], label=f'fitness: {ant.getPathLen()}', alpha=0.1)
+                pass
+
+        return axes
+
+    def solve(self, ax3d, canvas, maxIterations):
+        self.reset()
+
+        print("Solving")
+        ##
+        # Iterate through algorithm:
+
+        for i in range(maxIterations):
+            print(f'iteration {i + 1} / {maxIterations}')
+            self.solveImpl(currentIterationNumber=i, ax3d=ax3d)
+            # Plot each iteration
+            ax3d = self.plot(axes=ax3d)
+
+            if canvas.figure.stale:
+                canvas.draw_idle()
+            canvas.start_event_loop(self.renderDelay)
+
+            self.fitnessHistory.append(self.fitness)
+            i += 1
+        self.solved = True
+        print("Solved")
+
+        self.bestAnt.print()
