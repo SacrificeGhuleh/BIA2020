@@ -84,8 +84,8 @@ class Function(metaclass=abc.ABCMeta):
             ax.scatter(xs=bestPoint[0], ys=bestPoint[1], zs=funcVal, c='r', marker='o', label='best point')
         # fix issue with legend
         # https://github.com/matplotlib/matplotlib/issues/4067
-        polyc._facecolors2d = polyc._facecolors3d
-        polyc._edgecolors2d = polyc._edgecolors3d
+        # polyc._facecolors2d = polyc._facecolors3d
+        # polyc._edgecolors2d = polyc._edgecolors3d
         # plt.legend()
         # plt.show()
         return ax
@@ -300,15 +300,15 @@ ZakharovFunctionInstance = ZakharovFunction(-5, 10, 30)
 AckleyFunctionInstance = AckleyFunction(-32.768, 32.768, 60)
 
 functionsMap = {
-        'Sphere'     : SphereFunctionInstance,
-        'Schwefel'   : SchwefelFunctionInstance,
-        'Rosenbrock' : RosenbrockFunctionInstance,
-        'Rastrigin'  : RastriginFunctionInstance,
-        'Griewank'   : GriewankFunctionInstance,
-        'Levy'       : LevyFunctionInstance,
-        'Michalewicz': MichalewiczFunctionInstance,
-        'Zakharov'   : ZakharovFunctionInstance,
-        'Ackley'     : AckleyFunctionInstance
+    'Sphere': SphereFunctionInstance,
+    'Schwefel': SchwefelFunctionInstance,
+    'Rosenbrock': RosenbrockFunctionInstance,
+    'Rastrigin': RastriginFunctionInstance,
+    'Griewank': GriewankFunctionInstance,
+    'Levy': LevyFunctionInstance,
+    'Michalewicz': MichalewiczFunctionInstance,
+    'Zakharov': ZakharovFunctionInstance,
+    'Ackley': AckleyFunctionInstance
 }
 
 if __name__ == '__main__':

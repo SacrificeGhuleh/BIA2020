@@ -95,6 +95,7 @@ class Application(tk.Frame):
         dgaFrame = self.createDGAFrame(self.tabsFrame)
         somaFrame = self.createSomaFrame(self.tabsFrame)
         antFrame = self.createAntFrame(self.tabsFrame)
+        fireflyFrame = self.createFireflyFrame(self.tabsFrame)
 
         self.tabsFrame.add(blindFrame, text='Blind')
         self.tabsFrame.add(hillClimbFrame, text='Hill Climb')
@@ -103,6 +104,7 @@ class Application(tk.Frame):
         self.tabsFrame.add(dgaFrame, text='Differential GA')
         self.tabsFrame.add(somaFrame, text='SOMA')
         self.tabsFrame.add(antFrame, text='Ants')
+        self.tabsFrame.add(fireflyFrame, text='Firefly')
 
         self.tabsFrame.grid(row=0, column=0, padx=self.defPad, pady=self.defPad, sticky=tk.NW + tk.NE)
 
@@ -149,7 +151,7 @@ class Application(tk.Frame):
         frame = ttk.Frame(master, width=self.defaultNotebookFrameWidth, height=self.defaultNotebookFrameHeight)
 
         self.blindOptions = {
-                "pointCloud": tk.IntVar()
+            "pointCloud": tk.IntVar()
         }
         self.blindOptions["pointCloud"].set(60)
 
@@ -164,23 +166,23 @@ class Application(tk.Frame):
         frame = ttk.Frame(master, width=self.defaultNotebookFrameWidth, height=self.defaultNotebookFrameHeight)
 
         self.hillClimbOptions = {
-                "pointCloud": tk.IntVar(),
-                "sigma"     : tk.DoubleVar()
+            "pointCloud": tk.IntVar(),
+            "sigma": tk.DoubleVar()
         }
         self.hillClimbOptions["pointCloud"].set(60)
         self.hillClimbOptions["sigma"].set(0.05)
 
         self.getFrameWithEntry(
-                master=frame,
-                text="Point cloud size",
-                variable=self.hillClimbOptions["pointCloud"]
+            master=frame,
+            text="Point cloud size",
+            variable=self.hillClimbOptions["pointCloud"]
         ).grid(row=0, column=0, columnspan=2, sticky=tk.E)
         self.getFrameWithSliderAndEntry(
-                master=frame,
-                text="Sigma",
-                variable=self.hillClimbOptions["sigma"],
-                from_=0,
-                to=1
+            master=frame,
+            text="Sigma",
+            variable=self.hillClimbOptions["sigma"],
+            from_=0,
+            to=1
         ).grid(row=1, column=0, columnspan=2, sticky=tk.E)
 
         return frame
@@ -189,13 +191,13 @@ class Application(tk.Frame):
         frame = ttk.Frame(master, width=self.defaultNotebookFrameWidth, height=self.defaultNotebookFrameHeight)
 
         self.annealingOptions = {
-                "pointCloud": tk.IntVar(),
-                "temp"      : tk.DoubleVar(),
-                "tempMin"   : tk.DoubleVar(),
-                "alpha"     : tk.DoubleVar(),
-                "sigma"     : tk.DoubleVar(),
-                "elitism"   : tk.IntVar(),
-                "repeats"   : tk.IntVar(),
+            "pointCloud": tk.IntVar(),
+            "temp": tk.DoubleVar(),
+            "tempMin": tk.DoubleVar(),
+            "alpha": tk.DoubleVar(),
+            "sigma": tk.DoubleVar(),
+            "elitism": tk.IntVar(),
+            "repeats": tk.IntVar(),
         }
         self.annealingOptions["pointCloud"].set(10)
         self.annealingOptions["temp"].set(5000)
@@ -206,55 +208,55 @@ class Application(tk.Frame):
         self.annealingOptions["repeats"].set(5)
 
         self.getFrameWithEntry(
-                master=frame,
-                text="Point cloud size",
-                variable=self.annealingOptions["pointCloud"]
+            master=frame,
+            text="Point cloud size",
+            variable=self.annealingOptions["pointCloud"]
         ).grid(row=0, column=0, columnspan=2, sticky=tk.E)
         self.getFrameWithSliderAndEntry(
-                master=frame,
-                text="Sigma",
-                variable=self.annealingOptions["sigma"],
-                from_=0,
-                to=1
+            master=frame,
+            text="Sigma",
+            variable=self.annealingOptions["sigma"],
+            from_=0,
+            to=1
         ).grid(row=1, column=0, columnspan=2, sticky=tk.E)
         self.getFrameWithSliderAndEntry(
-                master=frame,
-                text="Temperature",
-                variable=self.annealingOptions["temp"],
-                from_=1,
-                to=10000
+            master=frame,
+            text="Temperature",
+            variable=self.annealingOptions["temp"],
+            from_=1,
+            to=10000
         ).grid(row=2, column=0, columnspan=2, sticky=tk.E)
         self.getFrameWithSliderAndEntry(
-                master=frame,
-                text="Min temperature",
-                variable=self.annealingOptions["tempMin"],
-                from_=0.0,
-                to=1
+            master=frame,
+            text="Min temperature",
+            variable=self.annealingOptions["tempMin"],
+            from_=0.0,
+            to=1
         ).grid(row=3, column=0, columnspan=2, sticky=tk.E)
         self.getFrameWithSliderAndEntry(
-                master=frame,
-                text="Alpha",
-                variable=self.annealingOptions["alpha"],
-                from_=0.01,
-                to=0.99
+            master=frame,
+            text="Alpha",
+            variable=self.annealingOptions["alpha"],
+            from_=0.01,
+            to=0.99
         ).grid(row=4, column=0, columnspan=2, sticky=tk.E)
         self.getFrameWithSliderAndEntry(
-                master=frame,
-                text="Repeats for T",
-                variable=self.annealingOptions["repeats"],
-                from_=0.0,
-                to=100
+            master=frame,
+            text="Repeats for T",
+            variable=self.annealingOptions["repeats"],
+            from_=0.0,
+            to=100
         ).grid(row=5, column=0, columnspan=2, sticky=tk.E)
         return frame
 
     def createTSPFrame(self, master):
         frame = ttk.Frame(master, width=self.defaultNotebookFrameWidth, height=self.defaultNotebookFrameHeight)
         self.tspOptions = {
-                'citiesCount'   : tk.IntVar(),
-                'dimensions'    : tk.IntVar(),
-                'populationSize': tk.IntVar(),
-                'workspaceSize' : [10000, 10000, 10000],
-                'mutationChance': tk.DoubleVar(),
+            'citiesCount': tk.IntVar(),
+            'dimensions': tk.IntVar(),
+            'populationSize': tk.IntVar(),
+            'workspaceSize': [10000, 10000, 10000],
+            'mutationChance': tk.DoubleVar(),
         }
 
         self.tspOptions['citiesCount'].set(20)
@@ -263,27 +265,27 @@ class Application(tk.Frame):
         self.tspOptions['mutationChance'].set(0.5)
 
         self.getFrameWithSliderAndEntry(
-                master=frame,
-                text="Cities count",
-                variable=self.tspOptions["citiesCount"],
-                from_=4,
-                to=100
+            master=frame,
+            text="Cities count",
+            variable=self.tspOptions["citiesCount"],
+            from_=4,
+            to=100
         ).grid(row=0, column=0, columnspan=2, sticky=tk.E)
 
         self.getFrameWithSliderAndEntry(
-                master=frame,
-                text="Population",
-                variable=self.tspOptions["populationSize"],
-                from_=1,
-                to=100
+            master=frame,
+            text="Population",
+            variable=self.tspOptions["populationSize"],
+            from_=1,
+            to=100
         ).grid(row=1, column=0, columnspan=2, sticky=tk.E)
 
         self.getFrameWithSliderAndEntry(
-                master=frame,
-                text="Mutation chance",
-                variable=self.tspOptions["mutationChance"],
-                from_=0,
-                to=1
+            master=frame,
+            text="Mutation chance",
+            variable=self.tspOptions["mutationChance"],
+            from_=0,
+            to=1
         ).grid(row=2, column=0, columnspan=2, sticky=tk.E)
 
         return frame
@@ -291,10 +293,10 @@ class Application(tk.Frame):
     def createDGAFrame(self, master):
         frame = ttk.Frame(master, width=self.defaultNotebookFrameWidth, height=self.defaultNotebookFrameHeight)
         self.dgaOptions = {
-                'populationSize': tk.IntVar(),
-                'dimensions'    : tk.IntVar(),
-                'scalingFactorF': tk.DoubleVar(),
-                'crossoverCR'   : tk.DoubleVar(),
+            'populationSize': tk.IntVar(),
+            'dimensions': tk.IntVar(),
+            'scalingFactorF': tk.DoubleVar(),
+            'crossoverCR': tk.DoubleVar(),
         }
 
         self.dgaOptions['populationSize'].set(20)
@@ -303,27 +305,27 @@ class Application(tk.Frame):
         self.dgaOptions['crossoverCR'].set(0.7)
 
         self.getFrameWithSliderAndEntry(
-                master=frame,
-                text="Population size",
-                variable=self.dgaOptions["populationSize"],
-                from_=4,
-                to=100
+            master=frame,
+            text="Population size",
+            variable=self.dgaOptions["populationSize"],
+            from_=4,
+            to=100
         ).grid(row=0, column=0, columnspan=2, sticky=tk.E)
 
         self.getFrameWithSliderAndEntry(
-                master=frame,
-                text="Scaling factor F",
-                variable=self.dgaOptions["scalingFactorF"],
-                from_=0.1,
-                to=1.1
+            master=frame,
+            text="Scaling factor F",
+            variable=self.dgaOptions["scalingFactorF"],
+            from_=0.1,
+            to=1.1
         ).grid(row=1, column=0, columnspan=2, sticky=tk.E)
 
         self.getFrameWithSliderAndEntry(
-                master=frame,
-                text="Crossover factor CR",
-                variable=self.dgaOptions["crossoverCR"],
-                from_=0.0,
-                to=1.0
+            master=frame,
+            text="Crossover factor CR",
+            variable=self.dgaOptions["crossoverCR"],
+            from_=0.0,
+            to=1.0
         ).grid(row=2, column=0, columnspan=2, sticky=tk.E)
 
         return frame
@@ -331,12 +333,12 @@ class Application(tk.Frame):
     def createSomaFrame(self, master):
         frame = ttk.Frame(master, width=self.defaultNotebookFrameWidth, height=self.defaultNotebookFrameHeight)
         self.somaOptions = {
-                'populationSize': tk.IntVar(),
-                'dimensions'    : tk.IntVar(),
-                'pathLength'    : tk.DoubleVar(),
-                'step'          : tk.DoubleVar(),
-                'perturbation'  : tk.DoubleVar(),
-                'minDiv'        : tk.DoubleVar(),
+            'populationSize': tk.IntVar(),
+            'dimensions': tk.IntVar(),
+            'pathLength': tk.DoubleVar(),
+            'step': tk.DoubleVar(),
+            'perturbation': tk.DoubleVar(),
+            'minDiv': tk.DoubleVar(),
         }
 
         self.somaOptions['populationSize'].set(20)
@@ -347,43 +349,43 @@ class Application(tk.Frame):
         self.somaOptions['minDiv'].set(-0.1)
 
         self.getFrameWithSliderAndEntry(
-                master=frame,
-                text="Population size",
-                variable=self.somaOptions["populationSize"],
-                from_=10,
-                to=100
+            master=frame,
+            text="Population size",
+            variable=self.somaOptions["populationSize"],
+            from_=10,
+            to=100
         ).grid(row=0, column=0, columnspan=2, sticky=tk.E)
 
         self.getFrameWithSliderAndEntry(
-                master=frame,
-                text="Path length",
-                variable=self.somaOptions["pathLength"],
-                from_=1.1,
-                to=10
+            master=frame,
+            text="Path length",
+            variable=self.somaOptions["pathLength"],
+            from_=1.1,
+            to=10
         ).grid(row=1, column=0, columnspan=2, sticky=tk.E)
 
         self.getFrameWithSliderAndEntry(
-                master=frame,
-                text="Step",
-                variable=self.somaOptions["step"],
-                from_=0.11,
-                to=self.somaOptions["pathLength"].get()
+            master=frame,
+            text="Step",
+            variable=self.somaOptions["step"],
+            from_=0.11,
+            to=self.somaOptions["pathLength"].get()
         ).grid(row=2, column=0, columnspan=2, sticky=tk.E)
 
         self.getFrameWithSliderAndEntry(
-                master=frame,
-                text="Perturbation",
-                variable=self.somaOptions["perturbation"],
-                from_=0,
-                to=1
+            master=frame,
+            text="Perturbation",
+            variable=self.somaOptions["perturbation"],
+            from_=0,
+            to=1
         ).grid(row=3, column=0, columnspan=2, sticky=tk.E)
 
         self.getFrameWithSliderAndEntry(
-                master=frame,
-                text="Min Div",
-                variable=self.somaOptions["minDiv"],
-                from_=1,
-                to=100
+            master=frame,
+            text="Min Div",
+            variable=self.somaOptions["minDiv"],
+            from_=1,
+            to=100
         ).grid(row=4, column=0, columnspan=2, sticky=tk.E)
 
         return frame
@@ -391,13 +393,13 @@ class Application(tk.Frame):
     def createAntFrame(self, master):
         frame = ttk.Frame(master, width=self.defaultNotebookFrameWidth, height=self.defaultNotebookFrameHeight)
         self.antOptions = {
-                'dimensions'     : tk.IntVar(),
-                'citiesCount'    : tk.IntVar(),
-                'evaporization'  : tk.DoubleVar(),
-                'initialFeromone': tk.DoubleVar(),
-                'alpha'          : tk.DoubleVar(),
-                'beta'           : tk.DoubleVar(),
-                'workspaceSize'  : [100, 100, 100],
+            'dimensions': tk.IntVar(),
+            'citiesCount': tk.IntVar(),
+            'evaporization': tk.DoubleVar(),
+            'initialFeromone': tk.DoubleVar(),
+            'alpha': tk.DoubleVar(),
+            'beta': tk.DoubleVar(),
+            'workspaceSize': [100, 100, 100],
         }
 
         self.antOptions['dimensions'].set(3)
@@ -408,45 +410,85 @@ class Application(tk.Frame):
         self.antOptions['beta'].set(2)
 
         self.getFrameWithSliderAndEntry(
-                master=frame,
-                text="Cities count",
-                variable=self.antOptions["citiesCount"],
-                from_=4,
-                to=100
+            master=frame,
+            text="Cities count",
+            variable=self.antOptions["citiesCount"],
+            from_=4,
+            to=100
         ).grid(row=0, column=0, columnspan=2, sticky=tk.E)
 
         self.getFrameWithSliderAndEntry(
-                master=frame,
-                text="Evaporization",
-                variable=self.antOptions["evaporization"],
-                from_=0.001,
-                to=0.99
+            master=frame,
+            text="Evaporization",
+            variable=self.antOptions["evaporization"],
+            from_=0.001,
+            to=0.99
         ).grid(row=1, column=0, columnspan=2, sticky=tk.E)
 
         self.getFrameWithSliderAndEntry(
-                master=frame,
-                text="Initial pheromone",
-                variable=self.antOptions["initialFeromone"],
-                from_=0.1,
-                to=10
+            master=frame,
+            text="Initial pheromone",
+            variable=self.antOptions["initialFeromone"],
+            from_=0.1,
+            to=10
         ).grid(row=2, column=0, columnspan=2, sticky=tk.E)
 
         self.getFrameWithSliderAndEntry(
-                master=frame,
-                text="Pheromone importance",
-                variable=self.antOptions["alpha"],
-                from_=0,
-                to=10
+            master=frame,
+            text="Pheromone importance",
+            variable=self.antOptions["alpha"],
+            from_=0,
+            to=10
         ).grid(row=3, column=0, columnspan=2, sticky=tk.E)
 
         self.getFrameWithSliderAndEntry(
-                master=frame,
-                text="Distance importance",
-                variable=self.antOptions["beta"],
-                from_=0,
-                to=10
+            master=frame,
+            text="Distance importance",
+            variable=self.antOptions["beta"],
+            from_=0,
+            to=10
         ).grid(row=4, column=0, columnspan=2, sticky=tk.E)
 
+        return frame
+
+    def createFireflyFrame(self, master):
+        frame = ttk.Frame(master, width=self.defaultNotebookFrameWidth, height=self.defaultNotebookFrameHeight)
+        self.fireflyOptions = {
+            'dimensions': tk.IntVar(),
+            "populationSize": tk.IntVar(),
+            'alpha': tk.DoubleVar(),
+            'betaAtractivness': tk.DoubleVar(),
+        }
+
+        self.fireflyOptions['dimensions'].set(3)
+        self.fireflyOptions['populationSize'].set(20)
+        self.fireflyOptions['alpha'].set(0.6)
+        self.fireflyOptions['betaAtractivness'].set(1.0)
+
+
+        self.getFrameWithSliderAndEntry(
+            master=frame,
+            text="Number of fireflies",
+            variable=self.fireflyOptions["populationSize"],
+            from_=4,
+            to=100
+        ).grid(row=0, column=0, columnspan=2, sticky=tk.E)
+
+        self.getFrameWithSliderAndEntry(
+            master=frame,
+            text="Random factor (alpha)",
+            variable=self.fireflyOptions["alpha"],
+            from_=0,
+            to=1
+        ).grid(row=1, column=0, columnspan=2, sticky=tk.E)
+
+        self.getFrameWithSliderAndEntry(
+            master=frame,
+            text="Atractivness (beta)",
+            variable=self.fireflyOptions["betaAtractivness"],
+            from_=0,
+            to=1
+        ).grid(row=2, column=0, columnspan=2, sticky=tk.E)
         return frame
 
     def getFrameWithEntry(self, master, text, variable):
@@ -477,17 +519,18 @@ class Application(tk.Frame):
         func.clearDict()
 
         algo = {
-                0: alg.BlindAlgorithm(function=func,
-                                      pointCloudSize=self.blindOptions["pointCloud"].get()),
-                1: alg.HillClimbAlgorithm(function=func,
-                                          pointCloudSize=self.hillClimbOptions["pointCloud"].get(),
-                                          sigma=self.hillClimbOptions["sigma"].get()),
-                2: alg.AnnealingAlgorithm(function=func,
-                                          options=self.annealingOptions),
-                3: alg.TravelingSalesmanGeneticAlgorithm(options=self.tspOptions),
-                4: alg.DifferentialGeneticAlgorithm(function=func, options=self.dgaOptions),
-                5: alg.SelfOrganizingMigrationAlgorithm(function=func, options=self.somaOptions),
-                6: alg.TravelingSalesmanAntColonyAlgorithm(options=self.antOptions),
+            0: alg.BlindAlgorithm(function=func,
+                                  pointCloudSize=self.blindOptions["pointCloud"].get()),
+            1: alg.HillClimbAlgorithm(function=func,
+                                      pointCloudSize=self.hillClimbOptions["pointCloud"].get(),
+                                      sigma=self.hillClimbOptions["sigma"].get()),
+            2: alg.AnnealingAlgorithm(function=func,
+                                      options=self.annealingOptions),
+            3: alg.TravelingSalesmanGeneticAlgorithm(options=self.tspOptions),
+            4: alg.DifferentialGeneticAlgorithm(function=func, options=self.dgaOptions),
+            5: alg.SelfOrganizingMigrationAlgorithm(function=func, options=self.somaOptions),
+            6: alg.TravelingSalesmanAntColonyAlgorithm(options=self.antOptions),
+            7: alg.FireflyAlgorithm(function=func, options=self.fireflyOptions),
         }.get(currentTabIdx, None)
 
         print(f"Func: {func}")

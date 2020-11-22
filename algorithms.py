@@ -129,7 +129,7 @@ class Algorithm(metaclass=abc.ABCMeta):
         randPoint = []
         for i in range(0, self.dimensions - 1):
             randPoint.append(
-                    self.clamp(np.random.normal(point[i], sigma), self.function.minimum, self.function.maximum))
+                self.clamp(np.random.normal(point[i], sigma), self.function.minimum, self.function.maximum))
         return randPoint
 
     ##
@@ -154,6 +154,17 @@ class Algorithm(metaclass=abc.ABCMeta):
             if num < self.function.minimum or num > self.function.maximum:
                 inBounds = False
         return inBounds
+
+    def getBest(self):
+        self.bestPoint = None
+        self.fitness = sys.float_info.max
+
+        for point in self.pointCloud:
+            val = self.function.getFunctionValue(point)
+            if val < self.fitness:
+                self.fitness = val
+                self.bestPoint = point
+        return self.bestPoint
 
 
 ##
@@ -243,7 +254,7 @@ class AnnealingAlgorithm(Algorithm):
         self.pointCloud = self.getRandomPointCloudNormal(self.bestPoint, self.sigma, cloudSize=self.pointCloudSize)
         for repeat in range(self.repeatsForTemperature):
             print(
-                    f"  iteration: {currentIterationNumber}, temperature: {self.curTemp} / minimal temperature: {self.tempMin}")
+                f"  iteration: {currentIterationNumber}, temperature: {self.curTemp} / minimal temperature: {self.tempMin}")
             ##
             # randomly select point from the set of neighbors
             neighbor = random.choice(self.pointCloud)
@@ -867,3 +878,50 @@ class TravelingSalesmanAntColonyAlgorithm(Algorithm):
         print("Solved")
 
         self.bestAnt.print()
+
+
+class FireflyAlgorithm(Algorithm):
+    def __init__(self, function: fn.Function, options):
+        super().__init__(function, pointCloudSize=options["populationSize"].get(),
+                         dimensions=options["dimensions"].get())
+
+        self.alpha = options['alpha'].get()
+        self.atractivness = options['betaAtractivness'].get()
+
+
+    def reset(self):
+        super().reset()
+        self.pointCloud = self.getRandomPointCloudUniform()
+        self.getBest()
+
+
+    def move(self, firefly, matingPartner):
+        newPos = copy.deepcopy(firefly)
+
+        if firefly == self.bestPoint:
+            randPos = copy.deepcopy(firefly)
+            for i in range(self.dimensions - 1):
+                randPos[i] += self.alpha * random.uniform(0, 1)
+            if self.function.getFunctionValue(randPos) <= self.function.getFunctionValue(firefly):
+                newPos = randPos
+
+        else:
+            a = np.array(firefly)
+            b = np.array(matingPartner)
+            dist = np.linalg.norm(a - b)
+            beta = self.atractivness / (1 + dist)
+            for i in range(self.dimensions - 1):
+                newPos[i] += beta * (matingPartner[i] - firefly[i]) + self.alpha * random.uniform(0, 1)
+        return newPos
+
+    def solveImpl(self, currentIterationNumber, ax3d=None):
+        newPopulation = copy.deepcopy(self.pointCloud)
+        for fireflyIdx in range(self.pointCloudSize):
+            if newPopulation[fireflyIdx] == self.bestPoint:
+                newPopulation[fireflyIdx] = self.move(newPopulation[fireflyIdx], None)
+            else:
+                for matingPartnerIdx in range(self.pointCloudSize):
+                    if self.function.getFunctionValue(newPopulation[fireflyIdx]) > self.function.getFunctionValue(self.pointCloud[matingPartnerIdx]):
+                        newPopulation[fireflyIdx] = self.move(newPopulation[fireflyIdx], self.pointCloud[matingPartnerIdx])
+        self.pointCloud = newPopulation
+        self.getBest()
