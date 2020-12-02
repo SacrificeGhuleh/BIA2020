@@ -465,7 +465,6 @@ class Application(tk.Frame):
         self.fireflyOptions['alpha'].set(0.6)
         self.fireflyOptions['betaAtractivness'].set(1.0)
 
-
         self.getFrameWithSliderAndEntry(
             master=frame,
             text="Number of fireflies",

@@ -43,6 +43,7 @@ class Algorithm(metaclass=abc.ABCMeta):
         self.pointCloud = None
         self.fitnessHistory = []
         self.cloudFitnessHistory = [[], []]
+        self.function.curEval = 0
 
     ##
     # @brief Main function for solving
@@ -57,15 +58,16 @@ class Algorithm(metaclass=abc.ABCMeta):
             print(f"  iteration: {i}")
             self.solveImpl(currentIterationNumber=i, ax3d=ax3d)
 
-            # Plot each iteration
-            ax3d = self.function.plot(pointsCloud=self.pointCloud, bestPoint=self.bestPoint, surfaceAlpha=0.5,
-                                      axes=ax3d)
-
-            if canvas.figure.stale:
-                canvas.draw_idle()
-            canvas.start_event_loop(self.renderDelay)
+            if canvas is not None:
+                # Plot each iteration
+                ax3d = self.function.plot(pointsCloud=self.pointCloud, bestPoint=self.bestPoint, surfaceAlpha=0.5,
+                                          axes=ax3d)
+                if canvas.figure.stale:
+                    canvas.draw_idle()
+                canvas.start_event_loop(self.renderDelay)
 
             self.fitnessHistory.append(self.fitness)
+            self.function.clearDict()
         self.solved = True
         print("Solved")
 
@@ -888,12 +890,10 @@ class FireflyAlgorithm(Algorithm):
         self.alpha = options['alpha'].get()
         self.atractivness = options['betaAtractivness'].get()
 
-
     def reset(self):
         super().reset()
         self.pointCloud = self.getRandomPointCloudUniform()
         self.getBest()
-
 
     def move(self, firefly, matingPartner):
         newPos = copy.deepcopy(firefly)
@@ -911,7 +911,11 @@ class FireflyAlgorithm(Algorithm):
             dist = np.linalg.norm(a - b)
             beta = self.atractivness / (1 + dist)
             for i in range(self.dimensions - 1):
-                newPos[i] += beta * (matingPartner[i] - firefly[i]) + self.alpha * random.uniform(0, 1)
+                newPos[i] += beta * (matingPartner[i] - firefly[i]) + self.alpha * random.gauss(0, 1)
+
+        for i in range(self.dimensions - 1):
+            newPos[i] = self.clamp(newPos[i], self.function.minimum, self.function.maximum)
+
         return newPos
 
     def solveImpl(self, currentIterationNumber, ax3d=None):
@@ -921,7 +925,9 @@ class FireflyAlgorithm(Algorithm):
                 newPopulation[fireflyIdx] = self.move(newPopulation[fireflyIdx], None)
             else:
                 for matingPartnerIdx in range(self.pointCloudSize):
-                    if self.function.getFunctionValue(newPopulation[fireflyIdx]) > self.function.getFunctionValue(self.pointCloud[matingPartnerIdx]):
-                        newPopulation[fireflyIdx] = self.move(newPopulation[fireflyIdx], self.pointCloud[matingPartnerIdx])
+                    if self.function.getFunctionValue(newPopulation[fireflyIdx]) > self.function.getFunctionValue(
+                            self.pointCloud[matingPartnerIdx]):
+                        newPopulation[fireflyIdx] = self.move(newPopulation[fireflyIdx],
+                                                              self.pointCloud[matingPartnerIdx])
         self.pointCloud = newPopulation
         self.getBest()

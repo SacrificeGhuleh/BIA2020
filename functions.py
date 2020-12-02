@@ -24,8 +24,11 @@ class Function(metaclass=abc.ABCMeta):
         self.plotY = self.plotX.copy().T
         self.plotZ = self.getFunctionValueImpl((self.plotX, self.plotY))
         self.name = 'Unnamed function'
+        self.maxEval = np.math.inf
+        self.curEval = 0
 
-    ##
+        ##
+
     # @brief clear dictionary
     def clearDict(self):
         self.bufferedValues.clear()
@@ -35,6 +38,9 @@ class Function(metaclass=abc.ABCMeta):
     def getFunctionValue(self, x: list):
         tupleX = tuple(x)
         if tupleX not in self.bufferedValues:
+            self.curEval += 1
+            if self.curEval >= self.maxEval:
+                raise ('Max evaluations exceeded')
             self.bufferedValues[tupleX] = self.getFunctionValueImpl(x)
 
         return self.bufferedValues[tupleX]
