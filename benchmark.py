@@ -119,6 +119,7 @@ if __name__ == '__main__':
     try:
         populateWorkbook(worksheet)
     except:
+        print(f"Exception terminated run: {sys.exc_info()}")
         pass
     finally:
         workbook.close()
