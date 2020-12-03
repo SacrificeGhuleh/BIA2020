@@ -86,10 +86,11 @@ def populateWorkbook(sheet: xlsxwriter.worksheet.Worksheet):
             sheet.write(1, referenceCol + j, algoKey)
             fitnessResults = []
             for testIdx in range(testsCount):
-                alg.reset()
                 try:
+                    # FIXME inf value appearing in firebird alg
                     # Workaround for approx 1/200 chance for inf result
                     while not np.math.isinf(alg.fitness):
+                        alg.reset()
                         alg.solve(None, None, maxEvals * 2)
                 except:
                     pass

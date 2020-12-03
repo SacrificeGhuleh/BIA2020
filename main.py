@@ -96,6 +96,7 @@ class Application(tk.Frame):
         somaFrame = self.createSomaFrame(self.tabsFrame)
         antFrame = self.createAntFrame(self.tabsFrame)
         fireflyFrame = self.createFireflyFrame(self.tabsFrame)
+        tlbaFrame = self.createTLBAFrame(self.tabsFrame)
 
         self.tabsFrame.add(blindFrame, text='Blind')
         self.tabsFrame.add(hillClimbFrame, text='Hill Climb')
@@ -105,6 +106,7 @@ class Application(tk.Frame):
         self.tabsFrame.add(somaFrame, text='SOMA')
         self.tabsFrame.add(antFrame, text='Ants')
         self.tabsFrame.add(fireflyFrame, text='Firefly')
+        self.tabsFrame.add(tlbaFrame, text='TLBA')
 
         self.tabsFrame.grid(row=0, column=0, padx=self.defPad, pady=self.defPad, sticky=tk.NW + tk.NE)
 
@@ -490,6 +492,22 @@ class Application(tk.Frame):
         ).grid(row=2, column=0, columnspan=2, sticky=tk.E)
         return frame
 
+    def createTLBAFrame(self, master):
+        frame = ttk.Frame(master, width=self.defaultNotebookFrameWidth, height=self.defaultNotebookFrameHeight)
+        self.tlbaOptions = {
+            'dimensions': tk.IntVar(value=3),
+            "populationSize": tk.IntVar(value=20),
+        }
+
+        self.getFrameWithSliderAndEntry(
+            master=frame,
+            text="Population size",
+            variable=self.tlbaOptions["populationSize"],
+            from_=4,
+            to=100
+        ).grid(row=0, column=0, columnspan=2, sticky=tk.E)
+        return frame
+
     def getFrameWithEntry(self, master, text, variable):
         frame = ttk.Frame(master)
 
@@ -530,6 +548,7 @@ class Application(tk.Frame):
             5: alg.SelfOrganizingMigrationAlgorithm(function=func, options=self.somaOptions),
             6: alg.TravelingSalesmanAntColonyAlgorithm(options=self.antOptions),
             7: alg.FireflyAlgorithm(function=func, options=self.fireflyOptions),
+            8: alg.TeachingLearningBasedAlgorithm(function=func, options=self.tlbaOptions),
         }.get(currentTabIdx, None)
 
         print(f"Func: {func}")

@@ -931,3 +931,71 @@ class FireflyAlgorithm(Algorithm):
                                                               self.pointCloud[matingPartnerIdx])
         self.pointCloud = newPopulation
         self.getBest()
+
+
+class TeachingLearningBasedAlgorithm(Algorithm):
+    def __init__(self, function: fn.Function, options):
+        super().__init__(function, pointCloudSize=options["populationSize"].get(),
+                         dimensions=options["dimensions"].get())
+
+    def reset(self):
+        super().reset()
+        self.pointCloud = self.getRandomPointCloudUniform()
+        self.getBest()
+
+    def getMean(self):
+        mean = []
+
+        for i in range(self.dimensions - 1):
+            mean.append(0)
+
+        for point in self.pointCloud:
+            for i in range(self.dimensions - 1):
+                mean[i] += point[i]
+
+        for i in range(self.dimensions - 1):
+            mean[i] /= self.pointCloudSize
+        return mean
+
+    def getTf(self):
+        return np.random.randint(1, 3)
+
+    def solveImpl(self, currentIterationNumber, ax3d=None):
+        newPopulation = []
+        mean = self.getMean()
+        # https://stackoverflow.com/a/15738712
+        populationWithoutTeacher = [x for x in self.pointCloud if x != self.bestPoint]
+
+        for learner in populationWithoutTeacher:
+            # Teacher phase
+            newPoint = []
+            tf = self.getTf()
+            for i in range(self.dimensions - 1):
+                r = np.random.uniform(0, 1)
+                difference = r * (self.bestPoint[i] - tf * mean[i])
+                newPoint.append(self.clamp(learner[i] + difference, self.function.minimum, self.function.maximum))
+            if self.function.getFunctionValue(newPoint) < self.function.getFunctionValue(learner):
+                learner = (newPoint)
+
+            # Learner phase
+            populationWithoutLearner = [x for x in populationWithoutTeacher if x != learner]
+            anotherLearner = random.choice(populationWithoutLearner)
+            newPoint = []
+            if self.function.getFunctionValue(learner) < self.function.getFunctionValue(anotherLearner):
+                for i in range(self.dimensions - 1):
+                    r = np.random.uniform(0, 1)
+                    new = learner[i] + r * (learner[i] - anotherLearner[i])
+                    newPoint.append(self.clamp(new, self.function.minimum, self.function.maximum))
+            else:
+                for i in range(self.dimensions - 1):
+                    r = np.random.uniform(0, 1)
+                    new = learner[i] + r * (anotherLearner[i] - learner[i])
+                    newPoint.append(self.clamp(new, self.function.minimum, self.function.maximum))
+
+            if self.function.getFunctionValue(newPoint) < self.function.getFunctionValue(learner):
+                newPopulation.append(newPoint)
+            else:
+                newPopulation.append(learner)
+        newPopulation.append(self.bestPoint)
+        self.pointCloud = newPopulation
+        self.getBest()
