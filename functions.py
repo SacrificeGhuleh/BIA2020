@@ -29,6 +29,12 @@ class Function(metaclass=abc.ABCMeta):
 
         ##
 
+    def clamp(self, x: list):
+        clamped = x.copy()
+        for i in range(len(x)):
+            clamped[i] = max(self.minimum, min(x[i], self.maximum))
+        return clamped
+
     # @brief clear dictionary
     def clearDict(self):
         self.bufferedValues.clear()
@@ -36,6 +42,10 @@ class Function(metaclass=abc.ABCMeta):
     ##
     # @brief Buffered function
     def getFunctionValue(self, x: list):
+        for i in range(len(x)):
+            assert x[i] >= self.minimum
+            assert x[i] <= self.maximum
+
         tupleX = tuple(x)
         if tupleX not in self.bufferedValues:
             self.curEval += 1

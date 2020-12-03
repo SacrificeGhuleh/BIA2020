@@ -1,3 +1,5 @@
+import sys
+
 import functions as fn
 import algorithms as alg
 import numpy as np
@@ -5,13 +7,11 @@ import xlsxwriter
 import xlsxwriter.worksheet
 import statistics
 
-algorithmsCount = 3
-
 maxEvals = 3000
 
 testsCount = 30
 dimensions = 30
-populationSize = 20
+populationSize = 30
 
 meanRow = testsCount + 2
 deviationRow = testsCount + 3
@@ -56,6 +56,12 @@ def getAlgos(function: fn.Function):
     }
 
     algos['FA'] = alg.FireflyAlgorithm(function, fireflyOptions)
+
+    tlbaOptions = {
+        'dimensions': VarStub(value=3),
+        "populationSize": VarStub(value=20),
+    }
+    algos['TLBA'] = alg.TeachingLearningBasedAlgorithm(function, tlbaOptions)
     return algos
 
 
@@ -78,8 +84,8 @@ def populateWorkbook(sheet: xlsxwriter.worksheet.Worksheet):
         function.curEval = 0
         function.clearDict()
 
-        sheet.merge_range(0, referenceCol, 0, referenceCol + algorithmsCount - 1, key)
         algorithms = getAlgos(function)
+        sheet.merge_range(0, referenceCol, 0, referenceCol + len(algorithms) - 1, key)
         for j in range(len(algorithms)):
             algoKey = list(algorithms.keys())[j]
             alg = algorithms[algoKey]
@@ -87,12 +93,14 @@ def populateWorkbook(sheet: xlsxwriter.worksheet.Worksheet):
             fitnessResults = []
             for testIdx in range(testsCount):
                 try:
-                    # FIXME inf value appearing in firebird alg
-                    # Workaround for approx 1/200 chance for inf result
-                    while not np.math.isinf(alg.fitness):
-                        alg.reset()
-                        alg.solve(None, None, maxEvals * 2)
+                    alg.reset()
+                    alg.solve(None, None, maxEvals * 2)
+                except AssertionError as err:
+                    print(f"Assertion failed: {sys.exc_info()}")
+                    print(f"Current algo: {algoKey}")
+                    raise
                 except:
+                    # Exception is thrown, when max evals is exceeded. This is used to stop algorithm immediately
                     pass
                 # sheet.write(2 + testIdx, referenceCol + j, testIdx)
                 sheet.write(2 + testIdx, referenceCol + j, alg.fitness)
@@ -100,12 +108,12 @@ def populateWorkbook(sheet: xlsxwriter.worksheet.Worksheet):
             sheet.write(meanRow, referenceCol + j, statistics.mean(fitnessResults))
             sheet.write(deviationRow, referenceCol + j, statistics.stdev(fitnessResults))
             sheet.write(medianRow, referenceCol + j, statistics.median(fitnessResults))
-        referenceCol += algorithmsCount
+        referenceCol += len(algorithms)
 
 
 if __name__ == '__main__':
     # Create an new Excel file and add a worksheet.
-    workbook = xlsxwriter.Workbook('demo.xlsx')
+    workbook = xlsxwriter.Workbook('BIA2020_zvo0016.xlsx')
     worksheet = workbook.add_worksheet()
 
     try:

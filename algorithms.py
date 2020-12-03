@@ -902,6 +902,7 @@ class FireflyAlgorithm(Algorithm):
             randPos = copy.deepcopy(firefly)
             for i in range(self.dimensions - 1):
                 randPos[i] += self.alpha * random.uniform(0, 1)
+            randPos = self.function.clamp(randPos)
             if self.function.getFunctionValue(randPos) <= self.function.getFunctionValue(firefly):
                 newPos = randPos
 
@@ -913,9 +914,7 @@ class FireflyAlgorithm(Algorithm):
             for i in range(self.dimensions - 1):
                 newPos[i] += beta * (matingPartner[i] - firefly[i]) + self.alpha * random.gauss(0, 1)
 
-        for i in range(self.dimensions - 1):
-            newPos[i] = self.clamp(newPos[i], self.function.minimum, self.function.maximum)
-
+        newPos = self.function.clamp(newPos)
         return newPos
 
     def solveImpl(self, currentIterationNumber, ax3d=None):
@@ -929,6 +928,7 @@ class FireflyAlgorithm(Algorithm):
                             self.pointCloud[matingPartnerIdx]):
                         newPopulation[fireflyIdx] = self.move(newPopulation[fireflyIdx],
                                                               self.pointCloud[matingPartnerIdx])
+
         self.pointCloud = newPopulation
         self.getBest()
 
